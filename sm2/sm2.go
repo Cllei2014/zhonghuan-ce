@@ -1,9 +1,9 @@
 package sm2
 
 import (
-	"encoding/base64"
+	"crypto/rand"
+	"errors"
 	sm2TJ "github.com/Hyperledger-TWGC/tjfoc-gm/sm2"
-	"github.com/Hyperledger-TWGC/tjfoc-gm/sm3"
 	"github.com/Hyperledger-TWGC/tjfoc-gm/x509"
 	"github.com/aliyun/alibaba-cloud-sdk-go/services/kms"
 	"log"
@@ -15,6 +15,7 @@ const sm2SignAlgorithm = "SM2DSA"
 const sm2EncryptAlgorithm = "SM2PKE"
 
 const mockKeyVersionId = "mockKeyVersionId"
+const logHeader = "Mock ce: "
 
 var mockPrivateKeys []*sm2TJ.PrivateKey
 
@@ -28,19 +29,6 @@ type KeyAdapter struct {
 	usage      int
 	keyID      string
 	keyVersion string
-}
-
-func keyUsageString(keyUsage int) string {
-	switch keyUsage {
-	case EncryptAndDecrypt:
-		return "ENCRYPT/DECRYPT"
-	default:
-		return "SIGN/VERIFY"
-	}
-}
-
-func sm3Digest(message []byte) string {
-	return base64.StdEncoding.EncodeToString(sm3.Sm3Sum(message))
 }
 
 func CreateSm2KeyAdapter(client *kms.Client, usage int, keyID string) (*KeyAdapter, error) {
@@ -67,6 +55,17 @@ func (sm2 *KeyAdapter) KeyID() string {
 	return sm2.keyID
 }
 
+func (sm2 *KeyAdapter) getPrivateKey() (*sm2TJ.PrivateKey, error) {
+	keyId, err := strconv.Atoi(sm2.keyID)
+	if err != nil {
+		return nil, err
+	}
+	if keyId < 0 || keyId > len(mockPrivateKeys)-1 {
+		return nil, errors.New("Mock key id does not exist.")
+	}
+	return mockPrivateKeys[keyId], nil
+}
+
 func (sm2 *KeyAdapter) CreateKey() error {
 	privateKey, err := sm2TJ.GenerateKey(nil)
 	if err != nil {
@@ -77,21 +76,114 @@ func (sm2 *KeyAdapter) CreateKey() error {
 
 	sm2.keyID = strconv.Itoa(mockKeyId)
 	sm2.keyVersion = mockKeyVersionId
-	log.Println("Create new key with mock keyId:", mockKeyId)
+	log.Println(logHeader, "Create new key with mock keyId:", mockKeyId)
 
 	return nil
 }
 
 func (sm2 *KeyAdapter) GetPublicKey() (string, error) {
-	mockKeyId, err := strconv.Atoi(sm2.keyID)
+	privateKey, err := sm2.getPrivateKey()
 	if err != nil {
 		return "", err
 	}
-	privateKey := mockPrivateKeys[mockKeyId]
 	publicKeyPem, err := x509.WritePublicKeyToMem(&privateKey.PublicKey)
 	if err != nil {
 		return "", err
 	}
+	log.Println(logHeader, "Get public key with mock keyId:", sm2.keyID)
 
 	return string(publicKeyPem), nil
+}
+
+func (sm2 *KeyAdapter) AsymmetricSign(message []byte) (string, error) {
+	if sm2.keyID == "" || sm2.keyVersion == "" {
+		return "", errors.New("need create sm2 key first")
+	}
+
+	if sm2.usage != SignAndVerify {
+		return "", errors.New("unexpected key usage")
+	}
+
+	privateKey, err := sm2.getPrivateKey()
+	if err != nil {
+		return "", err
+	}
+
+	sign, err := privateKey.Sign(rand.Reader, message, nil)
+	if err != nil {
+		return "", err
+	}
+	log.Println(logHeader, "Sign with mock keyId:", sm2.keyID)
+
+	return string(sign), nil
+}
+
+func (sm2 *KeyAdapter) AsymmetricVerify(message []byte, signature string) (bool, error) {
+	if sm2.keyID == "" || sm2.keyVersion == "" {
+		return false, errors.New("need create sm2 key first")
+	}
+
+	if sm2.usage != SignAndVerify {
+		return false, errors.New("unexpected key usage")
+	}
+
+	privateKey, err := sm2.getPrivateKey()
+	if err != nil {
+		return false, err
+	}
+	log.Println(logHeader, "Verify with mock keyId:", sm2.keyID)
+
+	return privateKey.PublicKey.Verify(message, []byte(signature)), nil
+}
+
+func (sm2 *KeyAdapter) AsymmetricEncrypt(plainText []byte) (string, error) {
+	if sm2.keyID == "" || sm2.keyVersion == "" {
+		return "", errors.New("need create sm2 key first")
+	}
+
+	if sm2.usage != EncryptAndDecrypt {
+		return "", errors.New("unexpected key usage")
+	}
+
+	privateKey, err := sm2.getPrivateKey()
+	if err != nil {
+		return "", err
+	}
+
+	cipherText, err := privateKey.PublicKey.Encrypt(plainText, rand.Reader)
+	if err != nil {
+		return "", err
+	}
+	log.Println(logHeader, "Encrypt with mock keyId:", sm2.keyID)
+
+	return string(cipherText), nil
+}
+
+func (sm2 *KeyAdapter) AsymmetricDecrypt(cipherText string) ([]byte, error) {
+	if sm2.keyID == "" || sm2.keyVersion == "" {
+		return nil, errors.New("need create sm2 key first")
+	}
+
+	if sm2.usage != EncryptAndDecrypt {
+		return nil, errors.New("unexpected key usage")
+	}
+
+	privateKey, err := sm2.getPrivateKey()
+	if err != nil {
+		return nil, err
+	}
+
+	plainText, err := privateKey.Decrypt([]byte(cipherText))
+	if err != nil {
+		return nil, err
+	}
+	log.Println(logHeader, "Decrypt with mock keyId:", sm2.keyID)
+
+	return plainText, nil
+}
+
+func (sm2 *KeyAdapter) ScheduleKeyDeletion() error {
+	sm2.usage = -1
+	log.Println(logHeader, "Schedule delete key with mock keyId:", sm2.keyID)
+	return nil
 }
