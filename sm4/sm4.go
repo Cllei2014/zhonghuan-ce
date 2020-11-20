@@ -1,10 +1,10 @@
 package sm4
 
 import (
-	"encoding/base64"
-	"github.com/aliyun/alibaba-cloud-sdk-go/sdk/requests"
-	"github.com/aliyun/alibaba-cloud-sdk-go/services/kms"
+	"crypto/rand"
 	sm4TJ "github.com/Hyperledger-TWGC/tjfoc-gm/sm4"
+	"github.com/aliyun/alibaba-cloud-sdk-go/services/kms"
+	"github.com/tw-bc-group/mock-collaborative-encryption-lib/utils"
 )
 
 const requestScheme = "https"
@@ -35,45 +35,45 @@ func CreateSm4KeyAdapter(client *kms.Client, keyID string) (*KeyAdapter, error) 
 }
 
 func (sm4 *KeyAdapter) CreateKey() error {
-	// ToDo: Create key
-
-	// sm4.keyID = response.KeyMetadata.KeyId
+	key := make([]byte, 16)
+	_, err := rand.Read(key)
+	if err != nil {
+		return err
+	}
+	id, _ := utils.AddSm4Key(string(key))
+	sm4.keyID = utils.KeyIdFrom(id)
 	return nil
 }
 
-func (sm4 *KeyAdapter) Encrypt(plainText []byte) ([]byte, error) {
-	request := kms.CreateEncryptRequest()
-	request.Scheme = requestScheme
-	request.KeyId = sm4.keyID
-	request.Plaintext = base64.StdEncoding.EncodeToString(plainText)
-
-	response, err := sm4.client.Encrypt(request)
+func (sm4 *KeyAdapter) getKey() ([]byte, error) {
+	key, err := utils.GetSm4Key(utils.KeyDbIdFrom(sm4.keyID))
 	if err != nil {
 		return nil, err
 	}
+	return []byte(key), nil
+}
 
-	return base64.StdEncoding.DecodeString(response.CiphertextBlob)
+func (sm4 *KeyAdapter) Encrypt(plainText []byte) ([]byte, error) {
+	key, err := sm4.getKey()
+	if err != nil {
+		return nil, err
+	}
+	cipherText, err := sm4TJ.Sm4OFB(key, plainText, true)
+	if err != nil {
+		return nil, err
+	}
+	return cipherText, nil
 }
 
 func (sm4 *KeyAdapter) Decrypt(cipherText []byte) ([]byte, error) {
-	request := kms.CreateDecryptRequest()
-	request.Scheme = requestScheme
-	request.CiphertextBlob = base64.StdEncoding.EncodeToString(cipherText)
-
-	response, err := sm4.client.Decrypt(request)
+	key, err := sm4.getKey()
 	if err != nil {
 		return nil, err
 	}
-
-	return base64.StdEncoding.DecodeString(response.Plaintext)
+	plainText, err := sm4TJ.Sm4OFB(key, cipherText, false)
+	return plainText, nil
 }
 
 func (sm4 *KeyAdapter) ScheduleKeyDeletion() error {
-	request := kms.CreateScheduleKeyDeletionRequest()
-	request.Scheme = requestScheme
-	request.KeyId = sm4.keyID
-	request.PendingWindowInDays = requests.NewInteger(7)
-
-	_, err := sm4.client.ScheduleKeyDeletion(request)
-	return err
+	return nil
 }

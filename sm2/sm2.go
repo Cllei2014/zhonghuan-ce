@@ -8,7 +8,6 @@ import (
 	"github.com/aliyun/alibaba-cloud-sdk-go/services/kms"
 	"github.com/tw-bc-group/mock-collaborative-encryption-lib/utils"
 	"log"
-	"strconv"
 )
 
 const requestScheme = "https"
@@ -54,17 +53,8 @@ func (sm2 *KeyAdapter) KeyID() string {
 	return sm2.keyID
 }
 
-func keyIdFrom(keyDbId int64) string {
-	return strconv.FormatInt(keyDbId, 10)
-}
-
-func keyDbIdFrom(keyId string) int64 {
-	keyDbId, _ := strconv.ParseInt(keyId, 10, 64)
-	return keyDbId
-}
-
 func (sm2 *KeyAdapter) getPrivateKey() (*sm2TJ.PrivateKey, error) {
-	privateKeyPem, err := utils.GetSm2Key(keyDbIdFrom(sm2.keyID))
+	privateKeyPem, err := utils.GetSm2Key(utils.KeyDbIdFrom(sm2.keyID))
 	if err != nil {
 		return nil, err
 	}
@@ -88,7 +78,7 @@ func (sm2 *KeyAdapter) CreateKey() error {
 	if err != nil {
 		return err
 	}
-	sm2.keyID = keyIdFrom(keyDbId)
+	sm2.keyID = utils.KeyIdFrom(keyDbId)
 	sm2.keyVersion = mockKeyVersionId
 	log.Println(logHeader, "Create new key with mock keyId:", keyDbId)
 	return nil
