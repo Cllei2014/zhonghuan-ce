@@ -6,6 +6,7 @@ import (
 	sm2TJ "github.com/Hyperledger-TWGC/tjfoc-gm/sm2"
 	"github.com/Hyperledger-TWGC/tjfoc-gm/x509"
 	"github.com/aliyun/alibaba-cloud-sdk-go/services/kms"
+	"github.com/tw-bc-group/mock-collaborative-encryption-lib/utils"
 	"log"
 	"strconv"
 )
@@ -15,9 +16,7 @@ const sm2SignAlgorithm = "SM2DSA"
 const sm2EncryptAlgorithm = "SM2PKE"
 
 const mockKeyVersionId = "mockKeyVersionId"
-const logHeader = "Mock ce: "
-
-var mockPrivateKeys []*sm2TJ.PrivateKey
+const logHeader = "Mock ce sm2: "
 
 const (
 	EncryptAndDecrypt = 1 + iota
@@ -55,15 +54,25 @@ func (sm2 *KeyAdapter) KeyID() string {
 	return sm2.keyID
 }
 
+func keyIdFrom(keyDbId int64) string {
+	return strconv.FormatInt(keyDbId, 10)
+}
+
+func keyDbIdFrom(keyId string) int64 {
+	keyDbId, _ := strconv.ParseInt(keyId, 10, 64)
+	return keyDbId
+}
+
 func (sm2 *KeyAdapter) getPrivateKey() (*sm2TJ.PrivateKey, error) {
-	keyId, err := strconv.Atoi(sm2.keyID)
+	privateKeyPem, err := utils.GetSm2Key(keyDbIdFrom(sm2.keyID))
 	if err != nil {
 		return nil, err
 	}
-	if keyId < 0 || keyId > len(mockPrivateKeys)-1 {
-		return nil, errors.New("Mock key id does not exist.")
+	privateKey, err := x509.ReadPrivateKeyFromMem([]byte(privateKeyPem), nil)
+	if err != nil {
+		return nil, err
 	}
-	return mockPrivateKeys[keyId], nil
+	return privateKey, nil
 }
 
 func (sm2 *KeyAdapter) CreateKey() error {
@@ -71,13 +80,17 @@ func (sm2 *KeyAdapter) CreateKey() error {
 	if err != nil {
 		return err
 	}
-	mockPrivateKeys = append(mockPrivateKeys, privateKey)
-	mockKeyId := len(mockPrivateKeys) - 1
-
-	sm2.keyID = strconv.Itoa(mockKeyId)
+	privateKeyPem, err := x509.WritePrivateKeyToMem(privateKey, nil)
+	if err != nil {
+		return err
+	}
+	keyDbId, err := utils.AddSm2Key(string(privateKeyPem))
+	if err != nil {
+		return err
+	}
+	sm2.keyID = keyIdFrom(keyDbId)
 	sm2.keyVersion = mockKeyVersionId
-	log.Println(logHeader, "Create new key with mock keyId:", mockKeyId)
-
+	log.Println(logHeader, "Create new key with mock keyId:", keyDbId)
 	return nil
 }
 
