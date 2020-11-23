@@ -4,7 +4,7 @@ import (
 	"crypto/rand"
 	sm4TJ "github.com/Hyperledger-TWGC/tjfoc-gm/sm4"
 	"github.com/aliyun/alibaba-cloud-sdk-go/services/kms"
-	"github.com/tw-bc-group/mock-collaborative-encryption-lib/utils"
+	"github.com/tw-bc-group/mock-collaborative-encryption-lib/common"
 	"log"
 )
 
@@ -20,7 +20,9 @@ type KeyAdapter struct {
 	keyID  string
 }
 
-func CreateSm4KeyAdapter(client *kms.Client, keyID string) (*KeyAdapter, error) {
+func CreateSm4KeyAdapter(keyID string) (*KeyAdapter, error) {
+	client := common.CreateClient()
+
 	sm4 := &KeyAdapter{
 		client: client,
 	}
@@ -41,14 +43,14 @@ func (sm4 *KeyAdapter) CreateKey() error {
 	if err != nil {
 		return err
 	}
-	keyDbId, _ := utils.AddSm4Key(string(key))
-	sm4.keyID = utils.KeyIdFrom(keyDbId)
+	keyDbId, _ := common.AddSm4Key(string(key))
+	sm4.keyID = common.KeyIdFrom(keyDbId)
 	log.Println(logHeader, "Create new key with mock keyId:", keyDbId)
 	return nil
 }
 
 func (sm4 *KeyAdapter) getKey() ([]byte, error) {
-	key, err := utils.GetSm4Key(utils.KeyDbIdFrom(sm4.keyID))
+	key, err := common.GetSm4Key(common.KeyDbIdFrom(sm4.keyID))
 	if err != nil {
 		return nil, err
 	}

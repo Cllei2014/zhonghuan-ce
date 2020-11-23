@@ -6,7 +6,7 @@ import (
 	sm2TJ "github.com/Hyperledger-TWGC/tjfoc-gm/sm2"
 	"github.com/Hyperledger-TWGC/tjfoc-gm/x509"
 	"github.com/aliyun/alibaba-cloud-sdk-go/services/kms"
-	"github.com/tw-bc-group/mock-collaborative-encryption-lib/utils"
+	"github.com/tw-bc-group/mock-collaborative-encryption-lib/common"
 	"log"
 )
 
@@ -29,10 +29,12 @@ type KeyAdapter struct {
 	keyVersion string
 }
 
-func CreateSm2KeyAdapter(client *kms.Client, usage int, keyID string) (*KeyAdapter, error) {
+func CreateSm2KeyAdapter(usage int, keyID string) (*KeyAdapter, error) {
 	if usage != EncryptAndDecrypt && usage != SignAndVerify {
 		usage = SignAndVerify
 	}
+
+	client := common.CreateClient()
 
 	sm2 := &KeyAdapter{
 		client: client,
@@ -54,7 +56,7 @@ func (sm2 *KeyAdapter) KeyID() string {
 }
 
 func (sm2 *KeyAdapter) getPrivateKey() (*sm2TJ.PrivateKey, error) {
-	privateKeyPem, err := utils.GetSm2Key(utils.KeyDbIdFrom(sm2.keyID))
+	privateKeyPem, err := common.GetSm2Key(common.KeyDbIdFrom(sm2.keyID))
 	if err != nil {
 		return nil, err
 	}
@@ -74,11 +76,11 @@ func (sm2 *KeyAdapter) CreateKey() error {
 	if err != nil {
 		return err
 	}
-	keyDbId, err := utils.AddSm2Key(string(privateKeyPem))
+	keyDbId, err := common.AddSm2Key(string(privateKeyPem))
 	if err != nil {
 		return err
 	}
-	sm2.keyID = utils.KeyIdFrom(keyDbId)
+	sm2.keyID = common.KeyIdFrom(keyDbId)
 	sm2.keyVersion = mockKeyVersionId
 	log.Println(logHeader, "Create new key with mock keyId:", keyDbId)
 	return nil

@@ -3,24 +3,12 @@ package sm2
 import (
 	"encoding/pem"
 	"github.com/Hyperledger-TWGC/tjfoc-gm/x509"
-	"github.com/aliyun/alibaba-cloud-sdk-go/services/kms"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
 
-func setupFixture() *kms.Client {
-	client, err := kms.NewClientWithAccessKey("ALIBABA_CLOUD_REGION",
-		"ALIBABA_CLOUD_ACCESS_KEY_ID", "ALIBABA_CLOUD_ACCESS_KEY_SECRET")
-	if err != nil {
-		panic(err)
-	}
-	return client
-}
-
 func TestParsePublicKey(t *testing.T) {
-	client := setupFixture()
-
-	sm2, err := CreateSm2KeyAdapter(client, SignAndVerify, "")
+	sm2, err := CreateSm2KeyAdapter(SignAndVerify, "")
 
 	if err != nil {
 		t.Fatalf("failed to create sm2 sign key, Got err: %s", err)
@@ -47,9 +35,7 @@ func TestParsePublicKey(t *testing.T) {
 }
 
 func TestSignAndVerify(t *testing.T) {
-	client := setupFixture()
-
-	sm2, err := CreateSm2KeyAdapter(client, SignAndVerify, "")
+	sm2, err := CreateSm2KeyAdapter(SignAndVerify, "")
 
 	if err != nil {
 		t.Fatalf("failed to create sm2 sign key, Got err: %s", err)
@@ -75,9 +61,7 @@ func TestSignAndVerify(t *testing.T) {
 }
 
 func TestEncryptAndDecrypt(t *testing.T) {
-	client := setupFixture()
-
-	sm2, err := CreateSm2KeyAdapter(client, EncryptAndDecrypt, "")
+	sm2, err := CreateSm2KeyAdapter(EncryptAndDecrypt, "")
 
 	if err != nil {
 		t.Fatalf("failed to create sm2 encrypt key, Got err: %s", err)
