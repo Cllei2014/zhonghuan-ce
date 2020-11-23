@@ -1,12 +1,14 @@
 package sm2
 
 import (
+	"crypto"
 	"crypto/rand"
 	"errors"
 	sm2TJ "github.com/Hyperledger-TWGC/tjfoc-gm/sm2"
 	"github.com/Hyperledger-TWGC/tjfoc-gm/x509"
 	"github.com/aliyun/alibaba-cloud-sdk-go/services/kms"
 	"github.com/tw-bc-group/mock-collaborative-encryption-lib/common"
+	"io"
 	"log"
 )
 
@@ -86,44 +88,39 @@ func (sm2 *KeyAdapter) CreateKey() error {
 	return nil
 }
 
-func (sm2 *KeyAdapter) GetPublicKey() (string, error) {
+func (sm2 *KeyAdapter) GetPublicKey() (*sm2TJ.PublicKey, error) {
 	privateKey, err := sm2.getPrivateKey()
 	if err != nil {
-		return "", err
+		return nil, err
 	}
-	publicKeyPem, err := x509.WritePublicKeyToMem(&privateKey.PublicKey)
-	if err != nil {
-		return "", err
-	}
-	log.Println(logHeader, "Get public key with mock keyId:", sm2.keyID)
 
-	return string(publicKeyPem), nil
+	return &privateKey.PublicKey, nil
 }
 
-func (sm2 *KeyAdapter) AsymmetricSign(message []byte) (string, error) {
+func (sm2 *KeyAdapter) AsymmetricSign(message []byte) ([]byte, error) {
 	if sm2.keyID == "" || sm2.keyVersion == "" {
-		return "", errors.New("need create sm2 key first")
+		return nil, errors.New("need create sm2 key first")
 	}
 
 	if sm2.usage != SignAndVerify {
-		return "", errors.New("unexpected key usage")
+		return nil, errors.New("unexpected key usage")
 	}
 
 	privateKey, err := sm2.getPrivateKey()
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	sign, err := privateKey.Sign(rand.Reader, message, nil)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 	log.Println(logHeader, "Sign with mock keyId:", sm2.keyID)
 
-	return string(sign), nil
+	return sign, nil
 }
 
-func (sm2 *KeyAdapter) AsymmetricVerify(message []byte, signature string) (bool, error) {
+func (sm2 *KeyAdapter) AsymmetricVerify(message, signature []byte) (bool, error) {
 	if sm2.keyID == "" || sm2.keyVersion == "" {
 		return false, errors.New("need create sm2 key first")
 	}
@@ -138,7 +135,7 @@ func (sm2 *KeyAdapter) AsymmetricVerify(message []byte, signature string) (bool,
 	}
 	log.Println(logHeader, "Verify with mock keyId:", sm2.keyID)
 
-	return privateKey.PublicKey.Verify(message, []byte(signature)), nil
+	return privateKey.PublicKey.Verify(message, signature), nil
 }
 
 func (sm2 *KeyAdapter) AsymmetricEncrypt(plainText []byte) (string, error) {
@@ -191,4 +188,31 @@ func (sm2 *KeyAdapter) ScheduleKeyDeletion() error {
 	sm2.usage = -1
 	log.Println(logHeader, "Schedule delete key with mock keyId:", sm2.keyID)
 	return nil
+}
+
+// implements crypto.Signer
+func (sm2 *KeyAdapter) TryIntoCryptoSigner() (crypto.Signer, error) {
+	pubKey, err := sm2.GetPublicKey()
+	if err != nil {
+		return nil, err
+	}
+
+	return &cryptoSigner{adapter: sm2, pubKey: pubKey}, nil
+}
+
+type cryptoSigner struct {
+	adapter *KeyAdapter
+	pubKey  crypto.PublicKey
+}
+
+func (c *cryptoSigner) Public() crypto.PublicKey {
+	return c.pubKey
+}
+
+func (c *cryptoSigner) Sign(_ io.Reader, digest []byte, _ crypto.SignerOpts) ([]byte, error) {
+	signature, err := c.adapter.AsymmetricSign(digest)
+	if err != nil {
+		return nil, err
+	}
+	return signature, nil
 }

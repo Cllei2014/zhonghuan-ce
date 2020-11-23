@@ -1,8 +1,6 @@
 package sm2
 
 import (
-	"encoding/pem"
-	"github.com/Hyperledger-TWGC/tjfoc-gm/x509"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
@@ -14,19 +12,9 @@ func TestParsePublicKey(t *testing.T) {
 		t.Fatalf("failed to create sm2 sign key, Got err: %s", err)
 	}
 
-	pemPubKey, err := sm2.GetPublicKey()
+	_, err = sm2.GetPublicKey()
 	if err != nil {
 		t.Fatalf("failed to get public key, Got err: %s", err)
-	}
-
-	block, _ := pem.Decode([]byte(pemPubKey))
-	if block == nil {
-		t.Fatalf("failed to pem decode publick key")
-	}
-
-	_, err = x509.ParseSm2PublicKey(block.Bytes)
-	if err != nil {
-		t.Fatalf("failed to parse public key, Got err: %s", err)
 	}
 
 	if err = sm2.ScheduleKeyDeletion(); err != nil {
