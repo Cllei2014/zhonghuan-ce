@@ -5,12 +5,13 @@ import (
 	sm4TJ "github.com/Hyperledger-TWGC/tjfoc-gm/sm4"
 	"github.com/aliyun/alibaba-cloud-sdk-go/services/kms"
 	"github.com/tw-bc-group/mock-collaborative-encryption-lib/utils"
+	"log"
 )
 
 const requestScheme = "https"
 
 const mockKeyVersionId = "mockKeyVersionId"
-const logHeader = "Mock ce sm2: "
+const logHeader = "Mock ce sm4: "
 
 var mockSm4Keys []*sm4TJ.SM4Key
 
@@ -40,8 +41,9 @@ func (sm4 *KeyAdapter) CreateKey() error {
 	if err != nil {
 		return err
 	}
-	id, _ := utils.AddSm4Key(string(key))
-	sm4.keyID = utils.KeyIdFrom(id)
+	keyDbId, _ := utils.AddSm4Key(string(key))
+	sm4.keyID = utils.KeyIdFrom(keyDbId)
+	log.Println(logHeader, "Create new key with mock keyId:", keyDbId)
 	return nil
 }
 
@@ -62,6 +64,7 @@ func (sm4 *KeyAdapter) Encrypt(plainText []byte) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
+	log.Println(logHeader, "Encrypt with mock keyId:", sm4.keyID)
 	return cipherText, nil
 }
 
@@ -71,6 +74,7 @@ func (sm4 *KeyAdapter) Decrypt(cipherText []byte) ([]byte, error) {
 		return nil, err
 	}
 	plainText, err := sm4TJ.Sm4OFB(key, cipherText, false)
+	log.Println(logHeader, "Decrypt with mock keyId:", sm4.keyID)
 	return plainText, nil
 }
 

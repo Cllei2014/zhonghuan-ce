@@ -14,7 +14,7 @@ const dbFileName = "keys.db"
 
 var dbFilePath string
 
-const logHeader = "Mock ce sm2: "
+const logHeader = "Mock ce db: "
 
 var keyDb *sql.DB
 
@@ -68,7 +68,6 @@ func AddSm2Key(key string) (id int64, err error) {
 	if err != nil {
 		return 0, err
 	}
-	log.Println(logHeader, "Add new sm2 key at id:", id)
 	return id, nil
 }
 
@@ -94,7 +93,6 @@ func createSm4Table() error {
 		return err
 	}
 	_, _ = statement.Exec()
-	log.Println(logHeader, "sm4 table created")
 	return nil
 }
 
@@ -112,7 +110,6 @@ func AddSm4Key(key string) (id int64, err error) {
 	if err != nil {
 		return 0, err
 	}
-	log.Println(logHeader, "Add new sm4 key at id:", id)
 	return id, nil
 }
 
