@@ -209,8 +209,8 @@ func (c *cryptoSigner) Public() crypto.PublicKey {
 	return c.pubKey
 }
 
-func (c *cryptoSigner) Sign(_ io.Reader, digest []byte, _ crypto.SignerOpts) ([]byte, error) {
-	signature, err := c.adapter.AsymmetricSign(digest)
+func (c *cryptoSigner) Sign(_ io.Reader, message []byte, _ crypto.SignerOpts) ([]byte, error) {
+	signature, err := c.adapter.AsymmetricSign(message)
 	if err != nil {
 		return nil, err
 	}
