@@ -33,3 +33,22 @@ func TestGenerateAndGetAndDeleteKey(t *testing.T) {
 	err = DeleteKey(config, userLabel)
 	assert.Nil(t, err, fmt.Sprint("Delete key error: ", err))
 }
+
+func TestSign(t *testing.T) {
+	config, userLabel, userPin := setUp()
+
+	publicKey, _ := GenerateKey(config, userLabel, userPin)
+
+	message := []byte("sign message")
+	signature, err := Sign(config, userLabel, userPin, message)
+	assert.Nil(t, err, fmt.Sprint("Sign error: ", err))
+
+	res, err := Verify(config, message, signature, publicKey)
+	assert.Nil(t, err, fmt.Sprint("Verify error: ", err))
+	assert.True(t, res, "Verify error: result should be true")
+
+	wrongMessage := []byte("wrong message")
+	res, err = Verify(config, wrongMessage, signature, publicKey)
+	assert.Nil(t, err, fmt.Sprint("Verify error: ", err))
+	assert.False(t, res, "Verify error: result should be true")
+}

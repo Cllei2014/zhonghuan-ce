@@ -21,7 +21,7 @@ import (
 
 const logHeader = "ZhongHuan lib:"
 const keyLen = 64
-const hashLen = 1024
+const signatureLen = 64
 
 func initialize(config string) (handle unsafe.Pointer, err error) {
 	handle = unsafe.Pointer(C.HANDLE(C.NULL))
@@ -119,4 +119,58 @@ func GetPublicKey(config, userLabel string) ([]byte, error) {
 
 	publicKey := C.GoBytes(unsafe.Pointer(&cPublicKey[0]), C.int(keyLen))
 	return publicKey, nil
+}
+
+func Sign(config, userLabel, userPin string, message []byte) ([]byte, error) {
+	handle, err := initialize(config)
+	if err != nil {
+		return nil, err
+	}
+	defer finalize(handle)
+
+	var cSignature [signatureLen]C.UCHAR
+	cSignatureLen := C.UINT32(keyLen)
+	res := uint32(C.X_Sign(
+		handle,
+		C.CString(userLabel),
+		C.CString(userPin),
+		(*C.uchar)(unsafe.Pointer(&message[0])),
+		C.UINT32(len(message)),
+		&cSignature[0],
+		&cSignatureLen))
+	if res != 0 {
+		log.Printf("%s X_Sign Error! ErrorCode=%X", logHeader, res)
+		return nil, errors.New("X_Sign Error!")
+	}
+	log.Println(logHeader, cSignatureLen)
+	signature := C.GoBytes(unsafe.Pointer(&cSignature[0]), C.int(cSignatureLen))
+	return signature, nil
+}
+
+func Verify(config string, message, signature []byte, publicKey *sm2.PublicKey) (bool, error) {
+	handle, err := initialize(config)
+	if err != nil {
+		return false, err
+	}
+	defer finalize(handle)
+
+	publicKeyByte := append(publicKey.X.Bytes(), publicKey.Y.Bytes()...)
+
+	res := uint32(C.X_Verify(
+		(*C.uchar)(unsafe.Pointer(&message[0])),
+		C.UINT32(len(message)),
+		(*C.uchar)(unsafe.Pointer(&publicKeyByte[0])),
+		C.UINT32(len(publicKeyByte)),
+		(*C.uchar)(unsafe.Pointer(&signature[0])),
+		C.UINT32(len(signature))))
+	if res == C.ERR_VERIFY_FAILED {
+		log.Println(logHeader, "X_Verify Failed!")
+		return false, nil
+	}
+	if res != 0 {
+		log.Printf("%s X_Verify Error! ErrorCode=%X", logHeader, res)
+		return false, errors.New("X_Verify Error!")
+	}
+	log.Println(logHeader, "X_Verify Success!")
+	return true, nil
 }
