@@ -37,6 +37,21 @@ func finalize(handle unsafe.Pointer) {
 	C.X_Finalize(handle)
 }
 
+func sm2PublicKeyFromZH(zhKey []byte) *sm2.PublicKey {
+	x := new(big.Int).SetBytes(zhKey[:keyLen/2])
+	y := new(big.Int).SetBytes(zhKey[keyLen/2:])
+	var sm2PublicKey = sm2.PublicKey{
+		Curve: sm2.P256Sm2(),
+		X:     x,
+		Y:     y,
+	}
+	return &sm2PublicKey
+}
+
+func zhPublicKeyFromSM2(sm2Key *sm2.PublicKey) []byte {
+	return append(sm2Key.X.Bytes(), sm2Key.Y.Bytes()...)
+}
+
 func GetVersion() (uint32, error) {
 	version := C.UINT32(0)
 	res := uint32(C.X_GetVersion(&version))
@@ -70,15 +85,7 @@ func GenerateKey(config, userLabel, userPin string) (*sm2.PublicKey, error) {
 	log.Println(logHeader, "X_GenKey Success!")
 
 	publicKey := C.GoBytes(unsafe.Pointer(&cPublicKey[0]), C.int(keyLen))
-	x := new(big.Int).SetBytes(publicKey[:keyLen/2])
-	y := new(big.Int).SetBytes(publicKey[keyLen/2:])
-	var sm2PublicKey = sm2.PublicKey{
-		Curve: sm2.P256Sm2(),
-		X:     x,
-		Y:     y,
-	}
-	log.Println(logHeader, "Transform zhonghuan publicKey to SM2 publicKey Success!")
-	return &sm2PublicKey, nil
+	return sm2PublicKeyFromZH(publicKey), nil
 }
 
 func DeleteKey(config, userLabel string) error {
@@ -154,13 +161,12 @@ func Verify(config string, message, signature []byte, publicKey *sm2.PublicKey) 
 	}
 	defer finalize(handle)
 
-	publicKeyByte := append(publicKey.X.Bytes(), publicKey.Y.Bytes()...)
-
+	cPublicKeyByte := zhPublicKeyFromSM2(publicKey)
 	res := uint32(C.X_Verify(
 		(*C.uchar)(unsafe.Pointer(&message[0])),
 		C.UINT32(len(message)),
-		(*C.uchar)(unsafe.Pointer(&publicKeyByte[0])),
-		C.UINT32(len(publicKeyByte)),
+		(*C.uchar)(unsafe.Pointer(&cPublicKeyByte[0])),
+		C.UINT32(len(cPublicKeyByte)),
 		(*C.uchar)(unsafe.Pointer(&signature[0])),
 		C.UINT32(len(signature))))
 	if res == C.ERR_VERIFY_FAILED {
