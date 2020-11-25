@@ -13,7 +13,9 @@ package zhonghuan
 import "C"
 import (
 	"errors"
+	"github.com/Hyperledger-TWGC/tjfoc-gm/sm2"
 	"log"
+	"math/big"
 	"unsafe"
 )
 
@@ -46,7 +48,7 @@ func GetVersion() (uint32, error) {
 	return uint32(version), nil
 }
 
-func GenerateKey(config, userLabel, userPin string) ([]byte, error) {
+func GenerateKey(config, userLabel, userPin string) (*sm2.PublicKey, error) {
 	handle, err := initialize(config)
 	if err != nil {
 		return nil, err
@@ -68,12 +70,15 @@ func GenerateKey(config, userLabel, userPin string) ([]byte, error) {
 	log.Println(logHeader, "X_GenKey Success!")
 
 	publicKey := C.GoBytes(unsafe.Pointer(&cPublicKey[0]), C.int(keyLen))
-	//sm2PublicKey, err := x509.ParseSm2PublicKey(publicKey)
-	//if err != nil {
-	//	return nil, err
-	//}
-	//log.Println(logHeader, "Transform to SM2 PublicKey Success!")
-	return publicKey, nil
+	x := new(big.Int).SetBytes(publicKey[:keyLen/2])
+	y := new(big.Int).SetBytes(publicKey[keyLen/2:])
+	var sm2PublicKey = sm2.PublicKey{
+		Curve: sm2.P256Sm2(),
+		X:     x,
+		Y:     y,
+	}
+	log.Println(logHeader, "Transform zhonghuan publicKey to SM2 publicKey Success!")
+	return &sm2PublicKey, nil
 }
 
 func DeleteKey(config, userLabel string) error {

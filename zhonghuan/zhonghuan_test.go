@@ -1,6 +1,7 @@
 package zhonghuan
 
 import (
+	"crypto/rand"
 	"fmt"
 	"github.com/stretchr/testify/assert"
 	"testing"
@@ -21,8 +22,10 @@ func TestGetVersion(t *testing.T) {
 func TestGenerateAndGetAndDeleteKey(t *testing.T) {
 	config, userLabel, userPin := setUp()
 
-	_, err := GenerateKey(config, userLabel, userPin)
+	publicKey, err := GenerateKey(config, userLabel, userPin)
 	assert.Nil(t, err, fmt.Sprint("Generate key error: ", err))
+	_, err = publicKey.Encrypt([]byte("data"), rand.Reader)
+	assert.Nil(t, err, fmt.Sprint("Public key encrypt error: ", err))
 
 	_, err = GetPublicKey(config, userLabel)
 	assert.Nil(t, err, fmt.Sprint("Get key error: ", err))
