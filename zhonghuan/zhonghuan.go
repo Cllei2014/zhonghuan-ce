@@ -13,8 +13,6 @@ package zhonghuan
 import "C"
 import (
 	"errors"
-	"github.com/Hyperledger-TWGC/tjfoc-gm/sm2"
-	"github.com/Hyperledger-TWGC/tjfoc-gm/x509"
 	"log"
 	"unsafe"
 )
@@ -22,21 +20,44 @@ import (
 const logHeader = "ZhongHuan lib:"
 const keyLen = 64
 
-func GenerateKey(pcCfg, pcUserLabel, pcUserPin string) (*sm2.PublicKey, error) {
-	handle := unsafe.Pointer(C.HANDLE(C.NULL))
-	res := int(C.X_Initialize(C.CString(pcCfg), &handle))
+func initialize(config string) (handle unsafe.Pointer, err error) {
+	handle = unsafe.Pointer(C.HANDLE(C.NULL))
+	res := uint32(C.X_Initialize(C.CString(config), &handle))
 	if res != 0 {
 		log.Printf("%s X_Initialize Error! ErrorCode=%X", logHeader, res)
 		return nil, errors.New("X_Initialize Error!")
 	}
-	defer C.X_Finalize(handle)
+	return handle, nil
+}
+
+func finalize(handle unsafe.Pointer) {
+	C.X_Finalize(handle)
+}
+
+func GetVersion() (uint32, error) {
+	version := C.UINT32(0)
+	res := uint32(C.X_GetVersion(&version))
+	if res != 0 {
+		log.Printf("%s X_GetVersion Error! ErrorCode=%X", logHeader, res)
+		return 0, errors.New("X_GetVersion Error!")
+	}
+	log.Printf("%s X_GetVersion Success! Version=%X", logHeader, res)
+	return uint32(version), nil
+}
+
+func GenerateKey(config, userLabel, userPin string) ([]byte, error) {
+	handle, err := initialize(config)
+	if err != nil {
+		return nil, err
+	}
+	defer finalize(handle)
 
 	var cPublicKey [keyLen]C.UCHAR
 	cKeyLen := C.UINT32(keyLen)
-	res = int(C.X_GenKey(
+	res := uint32(C.X_GenKey(
 		handle,
-		C.CString(pcUserLabel),
-		C.CString(pcUserPin),
+		C.CString(userLabel),
+		C.CString(userPin),
 		&cPublicKey[0],
 		&cKeyLen))
 	if res != 0 {
@@ -46,10 +67,25 @@ func GenerateKey(pcCfg, pcUserLabel, pcUserPin string) (*sm2.PublicKey, error) {
 	log.Println(logHeader, "X_GenKey Success!")
 
 	publicKey := C.GoBytes(unsafe.Pointer(&cPublicKey[0]), C.int(keyLen))
-	sm2PublicKey, err := x509.ParseSm2PublicKey(publicKey)
+	//sm2PublicKey, err := x509.ParseSm2PublicKey(publicKey)
+	//if err != nil {
+	//	return nil, err
+	//}
+	//log.Println(logHeader, "Transform to SM2 PublicKey Success!")
+	return publicKey, nil
+}
+
+func DeleteKey(config, userLabel string) error {
+	handle, err := initialize(config)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	log.Println(logHeader, "Transform to SM2 PublicKey Success!")
-	return sm2PublicKey, nil
+	defer finalize(handle)
+
+	res := uint32(C.X_DelKey(handle, C.CString(userLabel)))
+	if res != 0 {
+		log.Printf("%s X_DelKey Error! ErrorCode=%X", logHeader, res)
+		return errors.New("X_DelKey Error")
+	}
+	return nil
 }
