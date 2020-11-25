@@ -19,6 +19,7 @@ import (
 
 const logHeader = "ZhongHuan lib:"
 const keyLen = 64
+const hashLen = 1024
 
 func initialize(config string) (handle unsafe.Pointer, err error) {
 	handle = unsafe.Pointer(C.HANDLE(C.NULL))
@@ -87,5 +88,30 @@ func DeleteKey(config, userLabel string) error {
 		log.Printf("%s X_DelKey Error! ErrorCode=%X", logHeader, res)
 		return errors.New("X_DelKey Error")
 	}
+	log.Println(logHeader, "X_DelKey Success!")
 	return nil
+}
+
+func GetPublicKey(config, userLabel string) ([]byte, error) {
+	handle, err := initialize(config)
+	if err != nil {
+		return nil, err
+	}
+	defer finalize(handle)
+
+	var cPublicKey [keyLen]C.UCHAR
+	cKeyLen := C.UINT32(keyLen)
+	res := uint32(C.X_GetPublicKey(
+		handle,
+		C.CString(userLabel),
+		&cPublicKey[0],
+		&cKeyLen))
+	if res != 0 {
+		log.Printf("%s X_GetPublicKey Error! ErrorCode=%X", logHeader, res)
+		return nil, errors.New("X_GetPublicKey Error!")
+	}
+	log.Println(logHeader, "X_GetPublicKey Success!")
+
+	publicKey := C.GoBytes(unsafe.Pointer(&cPublicKey[0]), C.int(keyLen))
+	return publicKey, nil
 }

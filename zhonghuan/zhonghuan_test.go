@@ -18,11 +18,14 @@ func TestGetVersion(t *testing.T) {
 	assert.Nil(t, err, fmt.Sprint("Get zhonghuan lib version version error: ", err))
 }
 
-func TestGenerateAndDeleteKey(t *testing.T) {
+func TestGenerateAndGetAndDeleteKey(t *testing.T) {
 	config, userLabel, userPin := setUp()
 
 	_, err := GenerateKey(config, userLabel, userPin)
 	assert.Nil(t, err, fmt.Sprint("Generate key error: ", err))
+
+	_, err = GetPublicKey(config, userLabel)
+	assert.Nil(t, err, fmt.Sprint("Get key error: ", err))
 
 	err = DeleteKey(config, userLabel)
 	assert.Nil(t, err, fmt.Sprint("Delete key error: ", err))
