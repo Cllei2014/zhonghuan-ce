@@ -1,3 +1,4 @@
 .idea/
 /vendor/
+/zhonghuan/lib/
 *.db
