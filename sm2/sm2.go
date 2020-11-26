@@ -41,6 +41,7 @@ func CreateSm2KeyAdapter(usage int, keyID string) (*KeyAdapter, error) {
 	sm2 := &KeyAdapter{
 		client: client,
 		usage:  usage,
+		keyID: keyID,
 	}
 
 	if keyID == "" {
@@ -98,7 +99,7 @@ func (sm2 *KeyAdapter) GetPublicKey() (*sm2TJ.PublicKey, error) {
 }
 
 func (sm2 *KeyAdapter) AsymmetricSign(message []byte) ([]byte, error) {
-	if sm2.keyID == "" || sm2.keyVersion == "" {
+	if sm2.keyID == "" {
 		return nil, errors.New("need create sm2 key first")
 	}
 
@@ -152,7 +153,7 @@ func (sm2 *KeyAdapter) AsymmetricEncrypt(plainText []byte) (string, error) {
 		return "", err
 	}
 
-	cipherText, err := privateKey.PublicKey.Encrypt(plainText, rand.Reader)
+	cipherText, err := privateKey.PublicKey.EncryptAsn1(plainText, rand.Reader)
 	if err != nil {
 		return "", err
 	}
@@ -175,7 +176,7 @@ func (sm2 *KeyAdapter) AsymmetricDecrypt(cipherText string) ([]byte, error) {
 		return nil, err
 	}
 
-	plainText, err := privateKey.Decrypt([]byte(cipherText))
+	plainText, err := privateKey.DecryptAsn1([]byte(cipherText))
 	if err != nil {
 		return nil, err
 	}
