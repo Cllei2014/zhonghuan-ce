@@ -34,7 +34,7 @@ func TestGenerateAndGetAndDeleteKey(t *testing.T) {
 	assert.Nil(t, err, fmt.Sprint("Delete key error: ", err))
 }
 
-func TestSign(t *testing.T) {
+func TestSignAndVerify(t *testing.T) {
 	config, userLabel, userPin := setUp()
 
 	publicKey, _ := GenerateKey(config, userLabel, userPin)
@@ -50,5 +50,19 @@ func TestSign(t *testing.T) {
 	wrongMessage := []byte("wrong message")
 	res, err = Verify(config, wrongMessage, signature, publicKey)
 	assert.Nil(t, err, fmt.Sprint("Verify error: ", err))
-	assert.False(t, res, "Verify error: result should be true")
+	assert.False(t, res, "Verify error: result should be false")
+}
+
+func TestAsymmetricEncryptAndDecrypt(t *testing.T) {
+	config, userLabel, userPin := setUp()
+
+	publicKey, _ := GenerateKey(config, userLabel, userPin)
+
+	plainText := []byte("plain text")
+	cipherText, err := AsymmetricEncrypt(config, plainText, publicKey)
+	assert.Nil(t, err, fmt.Sprint("Encrypt error: ", err))
+
+	decryptedPlainText, err := AsymmetricDecrypt(config, userLabel, userPin, cipherText)
+	assert.Nil(t, err, fmt.Sprint("Decrypt error: ", err))
+	assert.Equal(t, plainText, decryptedPlainText, "Decrypted text should equal plain text")
 }

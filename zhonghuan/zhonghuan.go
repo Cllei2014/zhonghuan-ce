@@ -52,6 +52,14 @@ func zhPublicKeyFromSM2(sm2Key *sm2.PublicKey) []byte {
 	return append(sm2Key.X.Bytes(), sm2Key.Y.Bytes()...)
 }
 
+func cipherTextLenFromPlain(plainTextLen int) int {
+	return plainTextLen + 96
+}
+
+func plainTextLenFromCipher(cipherTextLen int) int {
+	return cipherTextLen - 96
+}
+
 func GetVersion() (uint32, error) {
 	version := C.UINT32(0)
 	res := uint32(C.X_GetVersion(&version))
@@ -104,7 +112,7 @@ func DeleteKey(config, userLabel string) error {
 	return nil
 }
 
-func GetPublicKey(config, userLabel string) ([]byte, error) {
+func GetPublicKey(config, userLabel string) (*sm2.PublicKey, error) {
 	handle, err := initialize(config)
 	if err != nil {
 		return nil, err
@@ -125,7 +133,7 @@ func GetPublicKey(config, userLabel string) ([]byte, error) {
 	log.Println(logHeader, "X_GetPublicKey Success!")
 
 	publicKey := C.GoBytes(unsafe.Pointer(&cPublicKey[0]), C.int(keyLen))
-	return publicKey, nil
+	return sm2PublicKeyFromZH(publicKey), nil
 }
 
 func Sign(config, userLabel, userPin string, message []byte) ([]byte, error) {
@@ -149,7 +157,7 @@ func Sign(config, userLabel, userPin string, message []byte) ([]byte, error) {
 		log.Printf("%s X_Sign Error! ErrorCode=%X", logHeader, res)
 		return nil, errors.New("X_Sign Error!")
 	}
-	log.Println(logHeader, cSignatureLen)
+	log.Println(logHeader, "X_Sign Success!")
 	signature := C.GoBytes(unsafe.Pointer(&cSignature[0]), C.int(cSignatureLen))
 	return signature, nil
 }
@@ -161,12 +169,12 @@ func Verify(config string, message, signature []byte, publicKey *sm2.PublicKey) 
 	}
 	defer finalize(handle)
 
-	cPublicKeyByte := zhPublicKeyFromSM2(publicKey)
+	cPublicKey := zhPublicKeyFromSM2(publicKey)
 	res := uint32(C.X_Verify(
 		(*C.uchar)(unsafe.Pointer(&message[0])),
 		C.UINT32(len(message)),
-		(*C.uchar)(unsafe.Pointer(&cPublicKeyByte[0])),
-		C.UINT32(len(cPublicKeyByte)),
+		(*C.uchar)(unsafe.Pointer(&cPublicKey[0])),
+		C.UINT32(len(cPublicKey)),
 		(*C.uchar)(unsafe.Pointer(&signature[0])),
 		C.UINT32(len(signature))))
 	if res == C.ERR_VERIFY_FAILED {
@@ -179,4 +187,56 @@ func Verify(config string, message, signature []byte, publicKey *sm2.PublicKey) 
 	}
 	log.Println(logHeader, "X_Verify Success!")
 	return true, nil
+}
+
+func AsymmetricEncrypt(config string, plainText []byte, publicKey *sm2.PublicKey) ([]byte, error) {
+	handle, err := initialize(config)
+	if err != nil {
+		return nil, err
+	}
+	defer finalize(handle)
+
+	cPublicKey := zhPublicKeyFromSM2(publicKey)
+	cipherTextLen := cipherTextLenFromPlain(len(plainText))
+	cCipherTextLen := C.UINT32(cipherTextLen)
+	cipherText := make([]byte, cipherTextLen)
+	res := uint32(C.X_AsymmEncrypt(
+		(*C.UCHAR)(unsafe.Pointer(&cPublicKey[0])),
+		C.UINT32(len(cPublicKey)),
+		(*C.UCHAR)(unsafe.Pointer(&plainText[0])),
+		C.UINT32(len(plainText)),
+		(*C.UCHAR)(unsafe.Pointer(&cipherText[0])),
+		&cCipherTextLen))
+	if res != 0 {
+		log.Printf("%s X_AsymmEncrypt Error! ErrorCode=%X", logHeader, res)
+		return nil, errors.New("X_AsymmEncrypt Error!")
+	}
+	log.Println(logHeader, "X_AsymmEncrypt Success!")
+	return cipherText, nil
+}
+
+func AsymmetricDecrypt(config, userLabel, userPin string, cipherText []byte) ([]byte, error) {
+	handle, err := initialize(config)
+	if err != nil {
+		return nil, err
+	}
+	defer finalize(handle)
+
+	palinTextLen := plainTextLenFromCipher(len(cipherText))
+	cPlainTextLen := C.UINT32(palinTextLen)
+	plainText := make([]byte, palinTextLen)
+	res := uint32(C.X_AsymmDecrypt(
+		handle,
+		C.CString(userLabel),
+		C.CString(userPin),
+		(*C.UCHAR)(unsafe.Pointer(&cipherText[0])),
+		C.UINT32(len(cipherText)),
+		(*C.UCHAR)(unsafe.Pointer(&plainText[0])),
+		&cPlainTextLen))
+	if res != 0 {
+		log.Printf("%s X_AsymmDecrypt Error! ErrorCode=%X", logHeader, res)
+		return nil, errors.New("X_AsymmDecrypt Error!")
+	}
+	log.Println(logHeader, "X_AsymmDecrypt Success!")
+	return plainText, nil
 }
