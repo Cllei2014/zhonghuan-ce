@@ -6,7 +6,7 @@ import (
 )
 
 func TestParsePublicKey(t *testing.T) {
-	sm2, err := CreateSm2KeyAdapter(SignAndVerify, "")
+	sm2, err := CreateSm2KeyAdapter("")
 
 	if err != nil {
 		t.Fatalf("failed to create sm2 sign key, Got err: %s", err)
@@ -17,13 +17,13 @@ func TestParsePublicKey(t *testing.T) {
 		t.Fatalf("failed to get public key, Got err: %s", err)
 	}
 
-	if err = sm2.ScheduleKeyDeletion(); err != nil {
+	if err = sm2.KeyDeletion(); err != nil {
 		t.Fatalf("failed to schedule sm2 key deletion, Got err: %s", err)
 	}
 }
 
 func TestSignAndVerify(t *testing.T) {
-	sm2, err := CreateSm2KeyAdapter(SignAndVerify, "")
+	sm2, err := CreateSm2KeyAdapter("")
 
 	if err != nil {
 		t.Fatalf("failed to create sm2 sign key, Got err: %s", err)
@@ -43,13 +43,13 @@ func TestSignAndVerify(t *testing.T) {
 
 	assert.Equal(t, verify, true, "verify should be success")
 
-	if err = sm2.ScheduleKeyDeletion(); err != nil {
+	if err = sm2.KeyDeletion(); err != nil {
 		t.Fatalf("failed to schedule sm2 key deletion, Got err: %s", err)
 	}
 }
 
 func TestEncryptAndDecrypt(t *testing.T) {
-	sm2, err := CreateSm2KeyAdapter(EncryptAndDecrypt, "")
+	sm2, err := CreateSm2KeyAdapter("")
 
 	if err != nil {
 		t.Fatalf("failed to create sm2 encrypt key, Got err: %s", err)
@@ -69,7 +69,7 @@ func TestEncryptAndDecrypt(t *testing.T) {
 
 	assert.Equal(t, message, decryptText, "decrypted should same as plain text")
 
-	if err = sm2.ScheduleKeyDeletion(); err != nil {
+	if err = sm2.KeyDeletion(); err != nil {
 		t.Fatalf("failed to schedule sm2 key deletion, Got err: %s", err)
 	}
 }
