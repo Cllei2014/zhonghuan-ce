@@ -20,8 +20,9 @@ import (
 )
 
 const logHeader = "ZhongHuan lib:"
-const keyLen = 64
-const signatureLen = 64
+const KEN_LEN = 64
+const SIGNATURE_LEN = 64
+const LEN_CIPHER_MORE_THAN_PLAIN = 96
 
 func initialize(config string) (handle unsafe.Pointer, err error) {
 	handle = unsafe.Pointer(C.HANDLE(C.NULL))
@@ -38,8 +39,8 @@ func finalize(handle unsafe.Pointer) {
 }
 
 func sm2PublicKeyFromZH(zhKey []byte) *sm2.PublicKey {
-	x := new(big.Int).SetBytes(zhKey[:keyLen/2])
-	y := new(big.Int).SetBytes(zhKey[keyLen/2:])
+	x := new(big.Int).SetBytes(zhKey[:KEN_LEN/2])
+	y := new(big.Int).SetBytes(zhKey[KEN_LEN/2:])
 	var sm2PublicKey = sm2.PublicKey{
 		Curve: sm2.P256Sm2(),
 		X:     x,
@@ -53,11 +54,11 @@ func zhPublicKeyFromSM2(sm2Key *sm2.PublicKey) []byte {
 }
 
 func cipherTextLenFromPlain(plainTextLen int) int {
-	return plainTextLen + 96
+	return plainTextLen + LEN_CIPHER_MORE_THAN_PLAIN
 }
 
 func plainTextLenFromCipher(cipherTextLen int) int {
-	return cipherTextLen - 96
+	return cipherTextLen - LEN_CIPHER_MORE_THAN_PLAIN
 }
 
 func GetVersion() (uint32, error) {
@@ -78,8 +79,8 @@ func GenerateKey(config, userLabel, userPin string) (*sm2.PublicKey, error) {
 	}
 	defer finalize(handle)
 
-	var cPublicKey [keyLen]C.UCHAR
-	cKeyLen := C.UINT32(keyLen)
+	var cPublicKey [KEN_LEN]C.UCHAR
+	cKeyLen := C.UINT32(KEN_LEN)
 	res := uint32(C.X_GenKey(
 		handle,
 		C.CString(userLabel),
@@ -92,7 +93,7 @@ func GenerateKey(config, userLabel, userPin string) (*sm2.PublicKey, error) {
 	}
 	log.Println(logHeader, "X_GenKey Success!")
 
-	publicKey := C.GoBytes(unsafe.Pointer(&cPublicKey[0]), C.int(keyLen))
+	publicKey := C.GoBytes(unsafe.Pointer(&cPublicKey[0]), C.int(KEN_LEN))
 	return sm2PublicKeyFromZH(publicKey), nil
 }
 
@@ -119,8 +120,8 @@ func GetPublicKey(config, userLabel string) (*sm2.PublicKey, error) {
 	}
 	defer finalize(handle)
 
-	var cPublicKey [keyLen]C.UCHAR
-	cKeyLen := C.UINT32(keyLen)
+	var cPublicKey [KEN_LEN]C.UCHAR
+	cKeyLen := C.UINT32(KEN_LEN)
 	res := uint32(C.X_GetPublicKey(
 		handle,
 		C.CString(userLabel),
@@ -132,7 +133,7 @@ func GetPublicKey(config, userLabel string) (*sm2.PublicKey, error) {
 	}
 	log.Println(logHeader, "X_GetPublicKey Success!")
 
-	publicKey := C.GoBytes(unsafe.Pointer(&cPublicKey[0]), C.int(keyLen))
+	publicKey := C.GoBytes(unsafe.Pointer(&cPublicKey[0]), C.int(KEN_LEN))
 	return sm2PublicKeyFromZH(publicKey), nil
 }
 
@@ -143,8 +144,8 @@ func Sign(config, userLabel, userPin string, message []byte) ([]byte, error) {
 	}
 	defer finalize(handle)
 
-	var cSignature [signatureLen]C.UCHAR
-	cSignatureLen := C.UINT32(keyLen)
+	var cSignature [SIGNATURE_LEN]C.UCHAR
+	cSignatureLen := C.UINT32(KEN_LEN)
 	res := uint32(C.X_Sign(
 		handle,
 		C.CString(userLabel),
