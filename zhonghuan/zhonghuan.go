@@ -4,7 +4,7 @@ package zhonghuan
 
 #cgo CFLAGS: -I${SRCDIR}/include
 
-#cgo LDFLAGS: -L${SRCDIR}/lib -lxsign
+#cgo LDFLAGS: -lxsign
 
 #include "XSign.h"
 #include "XDef.h"
