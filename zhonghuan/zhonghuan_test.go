@@ -4,11 +4,15 @@ import (
 	"crypto/rand"
 	"fmt"
 	"github.com/stretchr/testify/assert"
+	"os"
 	"testing"
 )
 
 func setUp() (config, userLabel, userPin string) {
-	config = "dCj3on8SFj9054UDi+t5q1EEIwR1hGm95P1g8ihNfq9aWH0qDJE9uYa+zQol6C7uDVGJVnVep4p27OcYbll80SeqGsyetUWjmZ0GRsMeRywcYc6ApsXaXBg6XHF9JVspJyVGUWaP4sRdTEvnUwolIQ=="
+	config = os.Getenv("ZHONGHUAN_CE_CONFIG")
+	if len(config) == 0 {
+		panic("ZHONGHUAN_CE_CONFIG environment variable should be set!")
+	}
 	userLabel = "13800138000"
 	userPin = "12345678"
 	return
@@ -24,7 +28,7 @@ func TestGenerateAndGetAndDeleteKey(t *testing.T) {
 
 	publicKey, err := GenerateKey(config, userLabel, userPin)
 	assert.Nil(t, err, fmt.Sprint("Generate key error: ", err))
-	_, err = publicKey.Encrypt([]byte("data"), rand.Reader)
+	_, err = publicKey.EncryptAsn1([]byte("data"), rand.Reader)
 	assert.Nil(t, err, fmt.Sprint("Public key encrypt error: ", err))
 
 	_, err = GetPublicKey(config, userLabel)
