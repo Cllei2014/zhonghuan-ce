@@ -12,8 +12,8 @@ func TestParsePublicKey(t *testing.T) {
 		t.Fatalf("failed to create sm2 sign key, Got err: %s", err)
 	}
 
-	_, err = sm2.GetPublicKey()
-	if err != nil {
+	publicKey := sm2.GetPublicKey()
+	if publicKey == nil {
 		t.Fatalf("failed to get public key, Got err: %s", err)
 	}
 
