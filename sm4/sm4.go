@@ -8,10 +8,7 @@ import (
 	"log"
 )
 
-const requestScheme = "https"
-
-const mockKeyVersionId = "mockKeyVersionId"
-const logHeader = "Mock ce sm4: "
+const logHeader = "tjfoc sm4: "
 
 var mockSm4Keys []*sm4TJ.SM4Key
 
