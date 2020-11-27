@@ -2,12 +2,12 @@ package common
 
 import (
 	"database/sql"
-	_ "github.com/mattn/go-sqlite3"
 	"log"
 	"os"
 	"path"
-	"runtime"
 	"strconv"
+
+	_ "github.com/mattn/go-sqlite3"
 )
 
 const dbFileName = "keys.db"
@@ -25,7 +25,10 @@ func init() {
 		return
 	}
 
-	file, _ := os.Create(dbFilePath)
+	file, err := os.Create(dbFilePath)
+	if err != nil {
+		log.Fatalf("unable create path %s %s", dbFileName, err)
+	}
 	file.Close()
 	log.Println(logHeader, "Create db file:", dbFilePath)
 	keyDb, _ = sql.Open("sqlite3", dbFilePath)
@@ -34,8 +37,7 @@ func init() {
 }
 
 func getDbPath() string {
-	_, currentFilename, _, _ := runtime.Caller(0)
-	return path.Join(path.Dir(currentFilename), "..", dbFileName)
+	return path.Join("/tmp", dbFileName)
 }
 
 func createSm2Table() error {
