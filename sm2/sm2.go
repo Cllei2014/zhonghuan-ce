@@ -4,7 +4,7 @@ import (
 	"crypto"
 	"errors"
 	sm2TJ "github.com/Hyperledger-TWGC/tjfoc-gm/sm2"
-	"github.com/tw-bc-group/mock-collaborative-encryption-lib/zhonghuan"
+	"github.com/tw-bc-group/zhonghuan-ce/zhonghuan"
 	"io"
 	"os"
 )
