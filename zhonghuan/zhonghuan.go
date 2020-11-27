@@ -22,12 +22,12 @@ import (
 const logHeader = "ZhongHuan lib:"
 const KEN_LEN = 64
 const SIGNATURE_LEN = 64
-const LEN_CIPHER_MORE_THAN_PLAIN = 96
+const LEN_CIPHER_MORE_THAN_PLAIN = 96 // SM2标准中，密文长度 = 明文长度 + 96 byte
 
 func initialize(config string) (handle unsafe.Pointer, err error) {
 	handle = unsafe.Pointer(C.HANDLE(C.NULL))
 	res := uint32(C.X_Initialize(C.CString(config), &handle))
-	if res != 0 {
+	if res != C.ERR_SUCCESS {
 		log.Printf("%s X_Initialize Error! ErrorCode=%X", logHeader, res)
 		return nil, errors.New("X_Initialize Error!")
 	}
@@ -64,7 +64,7 @@ func plainTextLenFromCipher(cipherTextLen int) int {
 func GetVersion() (uint32, error) {
 	version := C.UINT32(0)
 	res := uint32(C.X_GetVersion(&version))
-	if res != 0 {
+	if res != C.ERR_SUCCESS {
 		log.Printf("%s X_GetVersion Error! ErrorCode=%X", logHeader, res)
 		return 0, errors.New("X_GetVersion Error!")
 	}
@@ -87,7 +87,7 @@ func GenerateKey(config, userLabel, userPin string) (*sm2.PublicKey, error) {
 		C.CString(userPin),
 		&cPublicKey[0],
 		&cKeyLen))
-	if res != 0 {
+	if res != C.ERR_SUCCESS {
 		log.Printf("%s X_GenKey Error! ErrorCode=%X", logHeader, res)
 		return nil, errors.New("X_GenKey Error!")
 	}
@@ -105,7 +105,7 @@ func DeleteKey(config, userLabel string) error {
 	defer finalize(handle)
 
 	res := uint32(C.X_DelKey(handle, C.CString(userLabel)))
-	if res != 0 {
+	if res != C.ERR_SUCCESS {
 		log.Printf("%s X_DelKey Error! ErrorCode=%X", logHeader, res)
 		return errors.New("X_DelKey Error")
 	}
@@ -127,7 +127,7 @@ func GetPublicKey(config, userLabel string) (*sm2.PublicKey, error) {
 		C.CString(userLabel),
 		&cPublicKey[0],
 		&cKeyLen))
-	if res != 0 {
+	if res != C.ERR_SUCCESS {
 		log.Printf("%s X_GetPublicKey Error! ErrorCode=%X", logHeader, res)
 		return nil, errors.New("X_GetPublicKey Error!")
 	}
@@ -154,7 +154,7 @@ func Sign(config, userLabel, userPin string, message []byte) ([]byte, error) {
 		C.UINT32(len(message)),
 		&cSignature[0],
 		&cSignatureLen))
-	if res != 0 {
+	if res != C.ERR_SUCCESS {
 		log.Printf("%s X_Sign Error! ErrorCode=%X", logHeader, res)
 		return nil, errors.New("X_Sign Error!")
 	}
@@ -182,7 +182,7 @@ func Verify(config string, message, signature []byte, publicKey *sm2.PublicKey) 
 		log.Println(logHeader, "X_Verify Failed!")
 		return false, nil
 	}
-	if res != 0 {
+	if res != C.ERR_SUCCESS {
 		log.Printf("%s X_Verify Error! ErrorCode=%X", logHeader, res)
 		return false, errors.New("X_Verify Error!")
 	}
@@ -208,7 +208,7 @@ func AsymmetricEncrypt(config string, plainText []byte, publicKey *sm2.PublicKey
 		C.UINT32(len(plainText)),
 		(*C.UCHAR)(unsafe.Pointer(&cipherText[0])),
 		&cCipherTextLen))
-	if res != 0 {
+	if res != C.ERR_SUCCESS {
 		log.Printf("%s X_AsymmEncrypt Error! ErrorCode=%X", logHeader, res)
 		return nil, errors.New("X_AsymmEncrypt Error!")
 	}
@@ -234,7 +234,7 @@ func AsymmetricDecrypt(config, userLabel, userPin string, cipherText []byte) ([]
 		C.UINT32(len(cipherText)),
 		(*C.UCHAR)(unsafe.Pointer(&plainText[0])),
 		&cPlainTextLen))
-	if res != 0 {
+	if res != C.ERR_SUCCESS {
 		log.Printf("%s X_AsymmDecrypt Error! ErrorCode=%X", logHeader, res)
 		return nil, errors.New("X_AsymmDecrypt Error!")
 	}
