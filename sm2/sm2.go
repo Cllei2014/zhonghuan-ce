@@ -43,6 +43,10 @@ func CreateSm2KeyAdapter(keyID string) (*KeyAdapter, error) {
 	return sm2, nil
 }
 
+func (adapter *KeyAdapter) PublicKey() *sm2TJ.PublicKey {
+	return adapter.publicKey
+}
+
 func (adapter *KeyAdapter) KeyID() string {
 	return adapter.keyID
 }
