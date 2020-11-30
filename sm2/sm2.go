@@ -43,32 +43,28 @@ func CreateSm2KeyAdapter(keyID string) (*KeyAdapter, error) {
 	return sm2, nil
 }
 
-func (sm2 *KeyAdapter) KeyID() string {
-	return sm2.keyID
+func (adapter *KeyAdapter) KeyID() string {
+	return adapter.keyID
 }
 
-func (sm2 *KeyAdapter) CreateKey() error {
-	userLabel, userPin := zhonghuan.LabelAndPinFromKeyId(sm2.keyID)
-	publicKey, err := zhonghuan.GenerateKey(sm2.config, userLabel, userPin)
-	sm2.publicKey = publicKey
+func (adapter *KeyAdapter) CreateKey() error {
+	userLabel, userPin := zhonghuan.LabelAndPinFromKeyId(adapter.keyID)
+	publicKey, err := zhonghuan.GenerateKey(adapter.config, userLabel, userPin)
+	adapter.publicKey = publicKey
 	return err
 }
 
-func (sm2 *KeyAdapter) GetPublicKey() *sm2TJ.PublicKey {
-	return sm2.publicKey
+func (adapter *KeyAdapter) AsymmetricSign(message []byte) ([]byte, error) {
+	userLabel, userPin := zhonghuan.LabelAndPinFromKeyId(adapter.keyID)
+	return zhonghuan.Sign(adapter.config, userLabel, userPin, message)
 }
 
-func (sm2 *KeyAdapter) AsymmetricSign(message []byte) ([]byte, error) {
-	userLabel, userPin := zhonghuan.LabelAndPinFromKeyId(sm2.keyID)
-	return zhonghuan.Sign(sm2.config, userLabel, userPin, message)
+func (adapter *KeyAdapter) AsymmetricVerify(message, signature []byte) (bool, error) {
+	return zhonghuan.Verify(adapter.config, message, signature, adapter.publicKey)
 }
 
-func (sm2 *KeyAdapter) AsymmetricVerify(message, signature []byte) (bool, error) {
-	return zhonghuan.Verify(sm2.config, message, signature, sm2.publicKey)
-}
-
-func (sm2 *KeyAdapter) AsymmetricEncrypt(plainText []byte) ([]byte, error) {
-	cipherText, err := zhonghuan.AsymmetricEncrypt(sm2.config, plainText, sm2.publicKey)
+func (adapter *KeyAdapter) AsymmetricEncrypt(plainText []byte) ([]byte, error) {
+	cipherText, err := zhonghuan.AsymmetricEncrypt(adapter.config, plainText, adapter.publicKey)
 	if err != nil {
 		return nil, err
 	}
@@ -76,14 +72,14 @@ func (sm2 *KeyAdapter) AsymmetricEncrypt(plainText []byte) ([]byte, error) {
 	return cipherText, nil
 }
 
-func (sm2 *KeyAdapter) AsymmetricDecrypt(cipherText []byte) ([]byte, error) {
-	userLabel, userPin := zhonghuan.LabelAndPinFromKeyId(sm2.keyID)
-	return zhonghuan.AsymmetricDecrypt(sm2.config, userLabel, userPin, cipherText)
+func (adapter *KeyAdapter) AsymmetricDecrypt(cipherText []byte) ([]byte, error) {
+	userLabel, userPin := zhonghuan.LabelAndPinFromKeyId(adapter.keyID)
+	return zhonghuan.AsymmetricDecrypt(adapter.config, userLabel, userPin, cipherText)
 }
 
-func (sm2 *KeyAdapter) KeyDeletion() error {
-	userLabel, _ := zhonghuan.LabelAndPinFromKeyId(sm2.keyID)
-	return zhonghuan.DeleteKey(sm2.config, userLabel)
+func (adapter *KeyAdapter) KeyDeletion() error {
+	userLabel, _ := zhonghuan.LabelAndPinFromKeyId(adapter.keyID)
+	return zhonghuan.DeleteKey(adapter.config, userLabel)
 }
 
 // implements crypto.Signer

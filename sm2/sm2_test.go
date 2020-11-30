@@ -6,24 +6,24 @@ import (
 )
 
 func TestParsePublicKey(t *testing.T) {
-	sm2, err := CreateSm2KeyAdapter("")
+	adapter, err := CreateSm2KeyAdapter("")
 
 	if err != nil {
 		t.Fatalf("failed to create sm2 sign key, Got err: %s", err)
 	}
 
-	publicKey := sm2.GetPublicKey()
+	publicKey := adapter.Public()
 	if publicKey == nil {
 		t.Fatalf("failed to get public key, Got err: %s", err)
 	}
 
-	if err = sm2.KeyDeletion(); err != nil {
+	if err = adapter.KeyDeletion(); err != nil {
 		t.Fatalf("failed to schedule sm2 key deletion, Got err: %s", err)
 	}
 }
 
 func TestSignAndVerify(t *testing.T) {
-	sm2, err := CreateSm2KeyAdapter("")
+	adapter, err := CreateSm2KeyAdapter("")
 
 	if err != nil {
 		t.Fatalf("failed to create sm2 sign key, Got err: %s", err)
@@ -31,25 +31,25 @@ func TestSignAndVerify(t *testing.T) {
 
 	message := []byte("test sign verify")
 
-	signature, err := sm2.AsymmetricSign(message)
+	signature, err := adapter.AsymmetricSign(message)
 	if err != nil {
 		t.Fatalf("failed to sm2 asymmetric sign, Got err: %s", err)
 	}
 
-	verify, err := sm2.AsymmetricVerify(message, signature)
+	verify, err := adapter.AsymmetricVerify(message, signature)
 	if err != nil {
 		t.Fatalf("failed to sm2 asymmetric verify, Got err: %s", err)
 	}
 
 	assert.Equal(t, verify, true, "verify should be success")
 
-	if err = sm2.KeyDeletion(); err != nil {
+	if err = adapter.KeyDeletion(); err != nil {
 		t.Fatalf("failed to schedule sm2 key deletion, Got err: %s", err)
 	}
 }
 
 func TestEncryptAndDecrypt(t *testing.T) {
-	sm2, err := CreateSm2KeyAdapter("")
+	adapter, err := CreateSm2KeyAdapter("")
 
 	if err != nil {
 		t.Fatalf("failed to create sm2 encrypt key, Got err: %s", err)
@@ -57,19 +57,19 @@ func TestEncryptAndDecrypt(t *testing.T) {
 
 	message := []byte("test crypto")
 
-	cipherText, err := sm2.AsymmetricEncrypt(message)
+	cipherText, err := adapter.AsymmetricEncrypt(message)
 	if err != nil {
 		t.Fatalf("failed to sm2 asymmetric encrypt, Got err: %s", err)
 	}
 
-	decryptText, err := sm2.AsymmetricDecrypt(cipherText)
+	decryptText, err := adapter.AsymmetricDecrypt(cipherText)
 	if err != nil {
 		t.Fatalf("failed to sm2 asymmetric decrypt, Got err: %s", err)
 	}
 
 	assert.Equal(t, message, decryptText, "decrypted should same as plain text")
 
-	if err = sm2.KeyDeletion(); err != nil {
+	if err = adapter.KeyDeletion(); err != nil {
 		t.Fatalf("failed to schedule sm2 key deletion, Got err: %s", err)
 	}
 }
