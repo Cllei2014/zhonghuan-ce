@@ -4,7 +4,7 @@ import (
 	"crypto/rand"
 	sm4TJ "github.com/Hyperledger-TWGC/tjfoc-gm/sm4"
 	"github.com/aliyun/alibaba-cloud-sdk-go/services/kms"
-	"github.com/tw-bc-group/mock-collaborative-encryption-lib/common"
+	"github.com/tw-bc-group/zhonghuan-ce/common"
 	"log"
 )
 

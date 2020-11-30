@@ -1,6 +1,6 @@
-module github.com/tw-bc-group/mock-collaborative-encryption-lib
+module github.com/tw-bc-group/zhonghuan-ce
 
-go 1.15
+go 1.14
 
 require (
 	github.com/Hyperledger-TWGC/tjfoc-gm v0.0.0-20201117155542-9542a21fafd1
