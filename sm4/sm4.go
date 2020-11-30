@@ -2,15 +2,13 @@ package sm4
 
 import (
 	"crypto/rand"
-	sm4TJ "github.com/Hyperledger-TWGC/tjfoc-gm/sm4"
+	"github.com/Hyperledger-TWGC/tjfoc-gm/sm4"
 	"github.com/aliyun/alibaba-cloud-sdk-go/services/kms"
 	"github.com/tw-bc-group/zhonghuan-ce/common"
 	"log"
 )
 
 const logHeader = "tjfoc sm4: "
-
-var mockSm4Keys []*sm4TJ.SM4Key
 
 type KeyAdapter struct {
 	client *kms.Client
@@ -20,63 +18,63 @@ type KeyAdapter struct {
 func CreateSm4KeyAdapter(keyID string) (*KeyAdapter, error) {
 	client := common.CreateClient()
 
-	sm4 := &KeyAdapter{
+	adapter := &KeyAdapter{
 		client: client,
 	}
 
 	if keyID == "" {
-		err := sm4.CreateKey()
+		err := adapter.CreateKey()
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	return sm4, nil
+	return adapter, nil
 }
 
-func (sm4 *KeyAdapter) CreateKey() error {
+func (adapter *KeyAdapter) CreateKey() error {
 	key := make([]byte, 16)
 	_, err := rand.Read(key)
 	if err != nil {
 		return err
 	}
 	keyDbId, _ := common.AddSm4Key(string(key))
-	sm4.keyID = common.KeyIdFrom(keyDbId)
+	adapter.keyID = common.KeyIdFrom(keyDbId)
 	log.Println(logHeader, "Create new key with mock keyId:", keyDbId)
 	return nil
 }
 
-func (sm4 *KeyAdapter) getKey() ([]byte, error) {
-	key, err := common.GetSm4Key(common.KeyDbIdFrom(sm4.keyID))
+func (adapter *KeyAdapter) getKey() ([]byte, error) {
+	key, err := common.GetSm4Key(common.KeyDbIdFrom(adapter.keyID))
 	if err != nil {
 		return nil, err
 	}
 	return []byte(key), nil
 }
 
-func (sm4 *KeyAdapter) Encrypt(plainText []byte) ([]byte, error) {
-	key, err := sm4.getKey()
+func (adapter *KeyAdapter) Encrypt(plainText []byte) ([]byte, error) {
+	key, err := adapter.getKey()
 	if err != nil {
 		return nil, err
 	}
-	cipherText, err := sm4TJ.Sm4OFB(key, plainText, true)
+	cipherText, err := sm4.Sm4OFB(key, plainText, true)
 	if err != nil {
 		return nil, err
 	}
-	log.Println(logHeader, "Encrypt with mock keyId:", sm4.keyID)
+	log.Println(logHeader, "Encrypt with mock keyId:", adapter.keyID)
 	return cipherText, nil
 }
 
-func (sm4 *KeyAdapter) Decrypt(cipherText []byte) ([]byte, error) {
-	key, err := sm4.getKey()
+func (adapter *KeyAdapter) Decrypt(cipherText []byte) ([]byte, error) {
+	key, err := adapter.getKey()
 	if err != nil {
 		return nil, err
 	}
-	plainText, err := sm4TJ.Sm4OFB(key, cipherText, false)
-	log.Println(logHeader, "Decrypt with mock keyId:", sm4.keyID)
+	plainText, err := sm4.Sm4OFB(key, cipherText, false)
+	log.Println(logHeader, "Decrypt with mock keyId:", adapter.keyID)
 	return plainText, nil
 }
 
-func (sm4 *KeyAdapter) ScheduleKeyDeletion() error {
+func (adapter *KeyAdapter) ScheduleKeyDeletion() error {
 	return nil
 }

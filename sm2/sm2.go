@@ -3,7 +3,7 @@ package sm2
 import (
 	"crypto"
 	"errors"
-	sm2TJ "github.com/Hyperledger-TWGC/tjfoc-gm/sm2"
+	"github.com/Hyperledger-TWGC/tjfoc-gm/sm2"
 	"github.com/tw-bc-group/zhonghuan-ce/zhonghuan"
 	"io"
 	"os"
@@ -12,38 +12,38 @@ import (
 type KeyAdapter struct {
 	config    string
 	keyID     string
-	publicKey *sm2TJ.PublicKey
+	publicKey *sm2.PublicKey
 }
 
 func CreateSm2KeyAdapter(keyID string) (*KeyAdapter, error) {
 	config := os.Getenv("ZHONGHUAN_CE_CONFIG")
 	if len(config) == 0 {
-		return nil, errors.New("ZHONGHUAN_CE_CONFIG environment variable should be set!")
+		return nil, errors.New("ZHONGHUAN_CE_CONFIG environment variable should be set")
 	}
-	sm2 := &KeyAdapter{
+	adapter := &KeyAdapter{
 		config:    config,
 		keyID:     keyID,
 		publicKey: nil,
 	}
 	if keyID == "" {
 		userLabel, userPin := zhonghuan.GenerateUser()
-		sm2.keyID = zhonghuan.KeyIdFromLabelAndPin(userLabel, userPin)
-		err := sm2.CreateKey()
+		adapter.keyID = zhonghuan.KeyIdFromLabelAndPin(userLabel, userPin)
+		err := adapter.CreateKey()
 		if err != nil {
 			return nil, err
 		}
 	} else {
-		userLabel, _ := zhonghuan.LabelAndPinFromKeyId(sm2.keyID)
+		userLabel, _ := zhonghuan.LabelAndPinFromKeyId(adapter.keyID)
 		publicKey, err := zhonghuan.GetPublicKey(config, userLabel)
 		if err != nil {
 			return nil, err
 		}
-		sm2.publicKey = publicKey
+		adapter.publicKey = publicKey
 	}
-	return sm2, nil
+	return adapter, nil
 }
 
-func (adapter *KeyAdapter) PublicKey() *sm2TJ.PublicKey {
+func (adapter *KeyAdapter) PublicKey() *sm2.PublicKey {
 	return adapter.publicKey
 }
 
