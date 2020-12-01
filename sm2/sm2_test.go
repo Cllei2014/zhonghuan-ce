@@ -1,8 +1,6 @@
 package sm2
 
 import (
-	"encoding/hex"
-	"fmt"
 	"github.com/Hyperledger-TWGC/tjfoc-gm/sm2"
 	"github.com/stretchr/testify/assert"
 	"testing"
@@ -38,9 +36,6 @@ func TestSignAndVerify(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to sm2 asymmetric sign, Got err: %s", err)
 	}
-
-	hexStr := hex.EncodeToString(signature)
-	fmt.Println(hexStr)
 
 	verify, err := adapter.AsymmetricVerify(message, signature)
 	if err != nil {
