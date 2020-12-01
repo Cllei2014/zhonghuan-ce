@@ -2,9 +2,8 @@ package zhonghuan
 
 /*
 
-#cgo CFLAGS: -I${SRCDIR}/include
-
-#cgo LDFLAGS: -lxsign
+#cgo CFLAGS: -I/usr/include
+#cgo LDFLAGS: -L/usr/lib -lxsign
 
 #include "XSign.h"
 #include "XDef.h"
@@ -12,7 +11,9 @@ package zhonghuan
 */
 import "C"
 import (
+	"encoding/hex"
 	"errors"
+	"fmt"
 	"github.com/Hyperledger-TWGC/tjfoc-gm/sm2"
 	"log"
 	"math/big"
@@ -134,6 +135,8 @@ func GetPublicKey(config, userLabel string) (*sm2.PublicKey, error) {
 	log.Println(logHeader, "X_GetPublicKey Success!")
 
 	publicKey := C.GoBytes(unsafe.Pointer(&cPublicKey[0]), C.int(KenLen))
+	hexPub := hex.EncodeToString(publicKey)
+	fmt.Println(hexPub)
 	return sm2PublicKeyFromZH(publicKey), nil
 }
 
@@ -160,6 +163,8 @@ func Sign(config, userLabel, userPin string, message []byte) ([]byte, error) {
 	}
 	log.Println(logHeader, "X_Sign Success!")
 	signature := C.GoBytes(unsafe.Pointer(&cSignature[0]), C.int(cSignatureLen))
+	hexSig := hex.EncodeToString(signature)
+	fmt.Println(hexSig)
 	return signature, nil
 }
 
