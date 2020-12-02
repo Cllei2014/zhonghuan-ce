@@ -49,6 +49,31 @@ func TestSignAndVerify(t *testing.T) {
 	}
 }
 
+func TestSignAndVerifyWithPublic(t *testing.T) {
+	adapter, err := CreateSm2KeyAdapter("")
+
+	if err != nil {
+		t.Fatalf("failed to create sm2 sign key, Got err: %s", err)
+	}
+
+	message := []byte("test sign verify")
+
+	signature, err := adapter.AsymmetricSign(message)
+	if err != nil {
+		t.Fatalf("failed to sm2 asymmetric sign, Got err: %s", err)
+	}
+
+	publicKey := adapter.PublicKey()
+
+	verify := publicKey.Verify(message, signature)
+
+	assert.Equal(t, verify, true, "verify should be success")
+
+	if err = adapter.KeyDeletion(); err != nil {
+		t.Fatalf("failed to schedule sm2 key deletion, Got err: %s", err)
+	}
+}
+
 func TestEncryptAndDecryptWithPublicKey(t *testing.T) {
 	adapter, err := CreateSm2KeyAdapter("")
 
