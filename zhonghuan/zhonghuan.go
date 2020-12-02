@@ -11,9 +11,7 @@ package zhonghuan
 */
 import "C"
 import (
-	"encoding/hex"
 	"errors"
-	"fmt"
 	"github.com/Hyperledger-TWGC/tjfoc-gm/sm2"
 	"log"
 	"math/big"
@@ -22,7 +20,7 @@ import (
 
 const logHeader = "ZhongHuan lib:"
 const KenLen = 128
-const SignatureLen = 64
+const SignatureLen = 256
 const LenCipherMoreThanPlain = 96 // SM2标准中，密文长度 = 明文长度 + 96 byte
 
 func initialize(config string) (handle unsafe.Pointer, err error) {
@@ -135,8 +133,6 @@ func GetPublicKey(config, userLabel string) (*sm2.PublicKey, error) {
 	log.Println(logHeader, "X_GetPublicKey Success!")
 
 	publicKey := C.GoBytes(unsafe.Pointer(&cPublicKey[0]), C.int(KenLen))
-	hexPub := hex.EncodeToString(publicKey)
-	fmt.Println(hexPub)
 	return sm2PublicKeyFromZH(publicKey), nil
 }
 
@@ -163,8 +159,6 @@ func Sign(config, userLabel, userPin string, message []byte) ([]byte, error) {
 	}
 	log.Println(logHeader, "X_Sign Success!")
 	signature := C.GoBytes(unsafe.Pointer(&cSignature[0]), C.int(cSignatureLen))
-	hexSig := hex.EncodeToString(signature)
-	fmt.Println(hexSig)
 	return signature, nil
 }
 
