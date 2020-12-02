@@ -11,7 +11,9 @@ package zhonghuan
 */
 import "C"
 import (
+	"bytes"
 	"errors"
+	"fmt"
 	"github.com/Hyperledger-TWGC/tjfoc-gm/sm2"
 	"log"
 	"math/big"
@@ -20,6 +22,7 @@ import (
 
 const logHeader = "ZhongHuan lib:"
 const KenLen = 128
+const PubKeyLen = 64
 const SignatureLen = 256
 const LenCipherMoreThanPlain = 96 // SM2标准中，密文长度 = 明文长度 + 96 byte
 
@@ -37,15 +40,22 @@ func finalize(handle unsafe.Pointer) {
 	C.X_Finalize(handle)
 }
 
-func sm2PublicKeyFromZH(zhKey []byte) *sm2.PublicKey {
-	x := new(big.Int).SetBytes(zhKey[:KenLen/2])
-	y := new(big.Int).SetBytes(zhKey[KenLen/2:])
-	var sm2PublicKey = sm2.PublicKey{
-		Curve: sm2.P256Sm2(),
-		X:     x,
-		Y:     y,
+func sm2PublicKeyFromZH(zhPubKey []byte) *sm2.PublicKey {
+	if len(zhPubKey) != PubKeyLen {
+		panic(fmt.Sprintf("public key length must be %d, actual: %d", PubKeyLen, len(zhPubKey)))
 	}
-	return &sm2PublicKey
+
+	sm2PubKey := &sm2.PublicKey{
+		Curve: sm2.P256Sm2(),
+		X:     new(big.Int).SetBytes(zhPubKey[:PubKeyLen/2]),
+		Y:     new(big.Int).SetBytes(zhPubKey[PubKeyLen/2:]),
+	}
+
+	if bytes.Compare(zhPublicKeyFromSM2(sm2PubKey), zhPubKey) != 0 {
+		panic("sm2 public key transform may be wrong.")
+	}
+
+	return sm2PubKey
 }
 
 func zhPublicKeyFromSM2(sm2Key *sm2.PublicKey) []byte {
@@ -92,7 +102,7 @@ func GenerateKey(config, userLabel, userPin string) (*sm2.PublicKey, error) {
 	}
 	log.Println(logHeader, "X_GenKey Success!")
 
-	publicKey := C.GoBytes(unsafe.Pointer(&cPublicKey[0]), C.int(KenLen))
+	publicKey := C.GoBytes(unsafe.Pointer(&cPublicKey[0]), C.int(cKeyLen))
 	return sm2PublicKeyFromZH(publicKey), nil
 }
 
