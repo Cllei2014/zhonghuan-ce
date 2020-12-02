@@ -24,7 +24,7 @@ const logHeader = "ZhongHuan lib:"
 const KenLen = 128
 const PubKeyLen = 64
 const SignatureLen = 256
-const LenCipherMoreThanPlain = 96 // SM2标准中，密文长度 = 明文长度 + 96 byte
+const LenCipherMoreThanPlain = 97 // SM2标准中，密文长度 = 明文长度 + 96 byte + 1 (04)
 
 func initialize(config string) (handle unsafe.Pointer, err error) {
 	handle = unsafe.Pointer(C.HANDLE(C.NULL))
