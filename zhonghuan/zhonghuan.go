@@ -28,7 +28,7 @@ func initialize(config string) (handle unsafe.Pointer, err error) {
 	res := uint32(C.X_Initialize(C.CString(config), &handle))
 	if res != C.ERR_SUCCESS {
 		log.Printf("%s X_Initialize Error! ErrorCode=%X", logHeader, res)
-		return nil, errors.New("X_Initialize Error!")
+		return nil, errors.New("X_Initialize Error")
 	}
 	return handle, nil
 }
@@ -65,7 +65,7 @@ func GetVersion() (uint32, error) {
 	res := uint32(C.X_GetVersion(&version))
 	if res != C.ERR_SUCCESS {
 		log.Printf("%s X_GetVersion Error! ErrorCode=%X", logHeader, res)
-		return 0, errors.New("X_GetVersion Error!")
+		return 0, errors.New("X_GetVersion Error")
 	}
 	log.Printf("%s X_GetVersion Success! Version=%X", logHeader, res)
 	return uint32(version), nil
@@ -88,7 +88,7 @@ func GenerateKey(config, userLabel, userPin string) (*sm2.PublicKey, error) {
 		&cKeyLen))
 	if res != C.ERR_SUCCESS {
 		log.Printf("%s X_GenKey Error! ErrorCode=%X", logHeader, res)
-		return nil, errors.New("X_GenKey Error!")
+		return nil, errors.New("X_GenKey Error")
 	}
 	log.Println(logHeader, "X_GenKey Success!")
 
@@ -128,7 +128,7 @@ func GetPublicKey(config, userLabel string) (*sm2.PublicKey, error) {
 		&cKeyLen))
 	if res != C.ERR_SUCCESS {
 		log.Printf("%s X_GetPublicKey Error! ErrorCode=%X", logHeader, res)
-		return nil, errors.New("X_GetPublicKey Error!")
+		return nil, errors.New("X_GetPublicKey Error")
 	}
 	log.Println(logHeader, "X_GetPublicKey Success!")
 
@@ -155,7 +155,7 @@ func Sign(config, userLabel, userPin string, message []byte) ([]byte, error) {
 		&cSignatureLen))
 	if res != C.ERR_SUCCESS {
 		log.Printf("%s X_Sign Error! ErrorCode=%X", logHeader, res)
-		return nil, errors.New("X_Sign Error!")
+		return nil, errors.New("X_Sign Error")
 	}
 	log.Println(logHeader, "X_Sign Success!")
 	signature := C.GoBytes(unsafe.Pointer(&cSignature[0]), C.int(cSignatureLen))
@@ -183,7 +183,7 @@ func Verify(config string, message, signature []byte, publicKey *sm2.PublicKey) 
 	}
 	if res != C.ERR_SUCCESS {
 		log.Printf("%s X_Verify Error! ErrorCode=%X", logHeader, res)
-		return false, errors.New("X_Verify Error!")
+		return false, errors.New("X_Verify Error")
 	}
 	log.Println(logHeader, "X_Verify Success!")
 	return true, nil
@@ -209,7 +209,7 @@ func AsymmetricEncrypt(config string, plainText []byte, publicKey *sm2.PublicKey
 		&cCipherTextLen))
 	if res != C.ERR_SUCCESS {
 		log.Printf("%s X_AsymmEncrypt Error! ErrorCode=%X", logHeader, res)
-		return nil, errors.New("X_AsymmEncrypt Error!")
+		return nil, errors.New("X_AsymmEncrypt Error")
 	}
 	log.Println(logHeader, "X_AsymmEncrypt Success!")
 	return cipherText, nil
@@ -235,7 +235,7 @@ func AsymmetricDecrypt(config, userLabel, userPin string, cipherText []byte) ([]
 		&cPlainTextLen))
 	if res != C.ERR_SUCCESS {
 		log.Printf("%s X_AsymmDecrypt Error! ErrorCode=%X", logHeader, res)
-		return nil, errors.New("X_AsymmDecrypt Error!")
+		return nil, errors.New("X_AsymmDecrypt Error")
 	}
 	log.Println(logHeader, "X_AsymmDecrypt Success!")
 	return plainText, nil
