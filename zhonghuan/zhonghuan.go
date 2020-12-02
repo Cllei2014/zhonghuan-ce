@@ -142,7 +142,7 @@ func GetPublicKey(config, userLabel string) (*sm2.PublicKey, error) {
 	}
 	log.Println(logHeader, "X_GetPublicKey Success!")
 
-	publicKey := C.GoBytes(unsafe.Pointer(&cPublicKey[0]), C.int(KenLen))
+	publicKey := C.GoBytes(unsafe.Pointer(&cPublicKey[0]), C.int(cKeyLen))
 	return sm2PublicKeyFromZH(publicKey), nil
 }
 

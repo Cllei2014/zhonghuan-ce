@@ -7,13 +7,22 @@ import (
 )
 
 func TestParsePublicKey(t *testing.T) {
-	adapter, err := CreateSm2KeyAdapter("")
+	var keyID string
 
-	if err != nil {
-		t.Fatalf("failed to create sm2 sign key, Got err: %s", err)
+	{
+		adapter, err := CreateSm2KeyAdapter("")
+		if err != nil {
+			t.Fatalf("failed to create sm2 key, Got err: %s", err)
+		}
+		keyID = adapter.KeyID()
 	}
 
-	publicKey := adapter.Public()
+	adapter, err := CreateSm2KeyAdapter(keyID)
+	if err != nil {
+		t.Fatalf("failed to create sm2 key, Got err: %s", err)
+	}
+
+	publicKey := adapter.PublicKey()
 	if publicKey == nil {
 		t.Fatalf("failed to get public key, Got err: %s", err)
 	}
@@ -78,7 +87,7 @@ func TestEncryptAndDecryptWithPublicKey(t *testing.T) {
 	adapter, err := CreateSm2KeyAdapter("")
 
 	if err != nil {
-		t.Fatalf("failed to create sm2 encrypt key, Got err: %s", err)
+		t.Fatalf("failed to create sm2 key, Got err: %s", err)
 	}
 
 	message := []byte("test crypto")
@@ -106,7 +115,7 @@ func TestEncryptAndDecrypt(t *testing.T) {
 	adapter, err := CreateSm2KeyAdapter("")
 
 	if err != nil {
-		t.Fatalf("failed to create sm2 encrypt key, Got err: %s", err)
+		t.Fatalf("failed to create sm2 key, Got err: %s", err)
 	}
 
 	message := []byte("test crypto")
