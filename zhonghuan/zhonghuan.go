@@ -45,9 +45,9 @@ func finalize(handle unsafe.Pointer) {
 	C.X_Finalize(handle)
 }
 
-func sm2PublicKeyFromZH(zhPubKey []byte) *sm2.PublicKey {
+func sm2PublicKeyFromZH(zhPubKey []byte) (*sm2.PublicKey, error) {
 	if len(zhPubKey) != PubKeyLen {
-		panic(fmt.Sprintf("public key length must be %d, actual: %d", PubKeyLen, len(zhPubKey)))
+		return nil, errors.New(fmt.Sprintf("public key length must be %d, actual: %d", PubKeyLen, len(zhPubKey)))
 	}
 
 	sm2PubKey := &sm2.PublicKey{
@@ -57,10 +57,10 @@ func sm2PublicKeyFromZH(zhPubKey []byte) *sm2.PublicKey {
 	}
 
 	if bytes.Compare(zhPublicKeyFromSM2(sm2PubKey), zhPubKey) != 0 {
-		panic("sm2 public key transform may be wrong.")
+		return nil, errors.New(fmt.Sprintf("sm2 public key transform may be wrong."))
 	}
 
-	return sm2PubKey
+	return sm2PubKey, nil
 }
 
 func zhPublicKeyFromSM2(sm2Key *sm2.PublicKey) []byte {
@@ -108,7 +108,7 @@ func GenerateKey(config, userLabel, userPin string) (*sm2.PublicKey, error) {
 	log.Println(logHeader, "X_GenKey Success!")
 
 	publicKey := C.GoBytes(unsafe.Pointer(&cPublicKey[0]), C.int(cKeyLen))
-	return sm2PublicKeyFromZH(publicKey), nil
+	return sm2PublicKeyFromZH(publicKey)
 }
 
 func DeleteKey(config, userLabel string) error {
@@ -148,7 +148,7 @@ func GetPublicKey(config, userLabel string) (*sm2.PublicKey, error) {
 	log.Println(logHeader, "X_GetPublicKey Success!")
 
 	publicKey := C.GoBytes(unsafe.Pointer(&cPublicKey[0]), C.int(cKeyLen))
-	return sm2PublicKeyFromZH(publicKey), nil
+	return sm2PublicKeyFromZH(publicKey)
 }
 
 func Sign(config, userLabel, userPin string, message []byte) ([]byte, error) {
