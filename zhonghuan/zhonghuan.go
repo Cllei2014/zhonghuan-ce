@@ -21,7 +21,6 @@ import (
 )
 
 const logHeader = "ZhongHuan lib:"
-const KenLen = 128
 const PubKeyLen = 64
 const SignatureLen = 256
 
@@ -93,8 +92,8 @@ func GenerateKey(config, userLabel, userPin string) (*sm2.PublicKey, error) {
 	}
 	defer finalize(handle)
 
-	var cPublicKey [KenLen]C.UCHAR
-	cKeyLen := C.UINT32(KenLen)
+	var cPublicKey [PubKeyLen]C.UCHAR
+	cKeyLen := C.UINT32(0)
 	res := uint32(C.X_GenKey(
 		handle,
 		C.CString(userLabel),
@@ -134,8 +133,8 @@ func GetPublicKey(config, userLabel string) (*sm2.PublicKey, error) {
 	}
 	defer finalize(handle)
 
-	var cPublicKey [KenLen]C.UCHAR
-	cKeyLen := C.UINT32(KenLen)
+	var cPublicKey [PubKeyLen]C.UCHAR
+	cKeyLen := C.UINT32(0)
 	res := uint32(C.X_GetPublicKey(
 		handle,
 		C.CString(userLabel),
@@ -159,7 +158,7 @@ func Sign(config, userLabel, userPin string, message []byte) ([]byte, error) {
 	defer finalize(handle)
 
 	var cSignature [SignatureLen]C.UCHAR
-	cSignatureLen := C.UINT32(KenLen)
+	cSignatureLen := C.UINT32(SignatureLen)
 	res := uint32(C.X_Sign(
 		handle,
 		C.CString(userLabel),
