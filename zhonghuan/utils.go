@@ -1,8 +1,10 @@
 package zhonghuan
 
 import (
+	"fmt"
 	"log"
 	"math/rand"
+	"time"
 )
 
 var letters = []byte("01234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
@@ -20,7 +22,8 @@ func randomLetters(length int) string {
 }
 
 func GenerateUser() (label string, pin string) {
-	label = randomLetters(LABEL_LEN)
+	timestamp := fmt.Sprint(time.Now().UnixNano())
+	label = timestamp + randomLetters(LABEL_LEN-len(timestamp))
 	pin = randomLetters(PIN_LEN)
 	log.Println("ZhongHuan lib: Generate userLabel:", label, ", userPin:", pin)
 	return
