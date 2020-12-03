@@ -24,6 +24,11 @@ const logHeader = "ZhongHuan lib:"
 const KenLen = 128
 const PubKeyLen = 64
 const SignatureLen = 256
+
+//根据不同的格式
+//1. C1||C3||C2（X||Y||Hash||密文），这种格式下，是96
+//2. 04||C1||C3||C2（04||X||Y||Hash||密文），这种格式下，是97。
+//04表示SM2椭圆曲线上的点的压缩方式。
 const LenCipherMoreThanPlain = 97 // SM2标准中，密文长度 = 明文长度 + 96 byte + 1 (04)
 
 func initialize(config string) (handle unsafe.Pointer, err error) {
