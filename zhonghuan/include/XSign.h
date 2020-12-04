@@ -17,7 +17,7 @@ extern "C"
 
 	/**
 	* 初始化。调用其他密钥相关算法之前，先调用此接口，用于初始化调用后台的信息接口。
-	* @param  {CHAR*} pcCfg       : 配置文件内容，请联系管理员提供
+	* @param  {CHAR*} pcCfg       : 配置文件内容，{"Remote":false,"Asn1":true,"Path":"","Url":"http://127.0.0.1/key","AppId":"1","AppPwd":"12345678","License":"488351a9861e7ed695f3cdb9a3e7909e"}
 	* @param  {HANDLE*} phContext : 返回的句柄
 	* @return {UINT32}            : 0成功，其他失败
 	*/
@@ -35,8 +35,8 @@ extern "C"
 	* @param  {HANDLE} hContext         : 句柄，调用X_Initialize接口获取
 	* @param  {CHAR*} pcUserLabel       : 用户标识
 	* @param  {CHAR*} pcUserPin         : 用户PIN码
-	* @param  {UCHAR*} pucPublicKey     : 公钥信息，格式为X||Y
-	* @param  {UINT32*} puiPublicKeyLen : 公钥长度，正常应为64
+	* @param  {UCHAR*} pucPublicKey     : 公钥信息，如果配置Asn1为true，则返回asn1结构，否则返回X||Y
+	* @param  {UINT32*} puiPublicKeyLen : 公钥长度
 	* @return {UINT32}                  : 0成功，其他失败
 	*/
 	UINT32 STDCALL X_GenKey(HANDLE hContext, CHAR *pcUserLabel, CHAR *pcUserPin, UCHAR *pucPublicKey, UINT32 *puiPublicKeyLen);
@@ -53,8 +53,8 @@ extern "C"
 	* 获取公钥
 	* @param  {HANDLE} hContext         : 句柄，调用X_Initialize接口获取
 	* @param  {CHAR*} pcUserLabel       : 用户标识
-	* @param  {UCHAR*} pucPublicKey     : 公钥信息，格式为X||Y
-	* @param  {UINT32*} puiPublicKeyLen : 公钥长度，正常为64
+	* @param  {UCHAR*} pucPublicKey     : 公钥信息，如果配置Asn1为true，则返回asn1结构，否则返回X||Y
+	* @param  {UINT32*} puiPublicKeyLen : 公钥长度
 	* @return {UINT32}                  : 0成功，其他失败
 	*/
 	UINT32 STDCALL X_GetPublicKey(HANDLE hContext, CHAR *pcUserLabel, UCHAR *pucPublicKey, UINT32 *puiPublicKeyLen);
@@ -76,7 +76,7 @@ extern "C"
 	* @param  {CHAR*} pcUserPin         : 用户PIN码
 	* @param  {UCHAR*} pucData          : 签名原文
 	* @param  {UINT32} uiDataLen        : 签名原文长度
-	* @param  {UCHAR*} pucSignValue     : 签名值
+	* @param  {UCHAR*} pucSignValue     : 签名值，如果配置Asn1为true，则返回asn1结构，否则返回X||Y
 	* @param  {UINT32*} puiSignValueLen : 签名值长度
 	* @return {UINT32}                  : 0成功，其他失败
 	*/
@@ -100,7 +100,7 @@ extern "C"
 	* @param  {UINT32} uiPublicKeyLen : 公钥长度
 	* @param  {UCHAR*} pucData        : 明文
 	* @param  {UINT32} uiDataLen      : 明文长度
-	* @param  {UCHAR*} pucEncData     : 密文
+	* @param  {UCHAR*} pucEncData     : 密文，格式为C1||C3||C2
 	* @param  {UINT32*} puiEncDataLen : 密文长度
 	* @return {UINT32}                : 0成功，其他失败
 	*/

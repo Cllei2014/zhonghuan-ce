@@ -62,3 +62,8 @@
 #define ERR_DECRYPT_S3							0x0002000C
 #define ERR_HASH								0x0002000D
 #define ERR_PIN									0x0002000E
+#define ERR_SIGN_S1								0x0002000F
+#define ERR_SIGN_S2								0x00020010
+#define ERR_SIGN_S3								0x00020011
+#define ERR_TRANSPORT							0x00020012
+#define ERR_POINT								0x00020013
