@@ -5,6 +5,7 @@ go 1.14
 require (
 	github.com/Hyperledger-TWGC/tjfoc-gm v0.0.0-20201117155542-9542a21fafd1
 	github.com/aliyun/alibaba-cloud-sdk-go v1.61.657
+	github.com/google/uuid v1.1.2
 	github.com/mattn/go-sqlite3 v1.14.5
 	github.com/sirupsen/logrus v1.7.0
 	github.com/stretchr/testify v1.6.1
