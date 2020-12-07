@@ -3,7 +3,7 @@ package common
 import (
 	"database/sql"
 	_ "github.com/mattn/go-sqlite3"
-	"log"
+	log "github.com/sirupsen/logrus"
 	"os"
 	"path"
 	"runtime"
@@ -14,7 +14,7 @@ const dbFileName = "keys.db"
 
 var dbFilePath string
 
-const logHeader = "Mock ce db: "
+var zhLog = log.WithFields(log.Fields{"lib": "tjfoc sm4 in ZhongHuan-CE"})
 
 var keyDb *sql.DB
 
@@ -27,7 +27,7 @@ func init() {
 
 	file, _ := os.Create(dbFilePath)
 	file.Close()
-	log.Println(logHeader, "Create db file:", dbFilePath)
+	zhLog.Debug("Create db file:", dbFilePath)
 	keyDb, _ = sql.Open("sqlite3", dbFilePath)
 	_ = createSm2Table()
 	_ = createSm4Table()
@@ -44,13 +44,13 @@ func createSm2Table() error {
 		"key" TEXT
 	);`
 
-	log.Println(logHeader, "Create sm2 table...")
+	zhLog.Debug("Create sm2 table...")
 	statement, err := keyDb.Prepare(createSm2TableSQL)
 	if err != nil {
 		return err
 	}
 	_, _ = statement.Exec()
-	log.Println(logHeader, "sm2 table created")
+	zhLog.Debug("sm2 table created")
 	return nil
 }
 
@@ -87,7 +87,7 @@ func createSm4Table() error {
 		"key" TEXT
 	);`
 
-	log.Println(logHeader, "Create sm4 table...")
+	zhLog.Debug("Create sm4 table...")
 	statement, err := keyDb.Prepare(createSm2TableSQL)
 	if err != nil {
 		return err

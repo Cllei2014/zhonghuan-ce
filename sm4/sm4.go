@@ -4,15 +4,19 @@ import (
 	"crypto/rand"
 	"github.com/Hyperledger-TWGC/tjfoc-gm/sm4"
 	"github.com/aliyun/alibaba-cloud-sdk-go/services/kms"
+	log "github.com/sirupsen/logrus"
 	"github.com/tw-bc-group/zhonghuan-ce/common"
-	"log"
 )
 
-const logHeader = "tjfoc sm4: "
+var zhLog = log.WithFields(log.Fields{"lib": "tjfoc sm4 in ZhongHuan-CE"})
 
 type KeyAdapter struct {
 	client *kms.Client
 	keyID  string
+}
+
+func init() {
+	common.SetLogLevelByEnv()
 }
 
 func CreateSm4KeyAdapter(keyID string) (*KeyAdapter, error) {
@@ -40,7 +44,7 @@ func (adapter *KeyAdapter) CreateKey() error {
 	}
 	keyDbId, _ := common.AddSm4Key(string(key))
 	adapter.keyID = common.KeyIdFrom(keyDbId)
-	log.Println(logHeader, "Create new key with mock keyId:", keyDbId)
+	zhLog.Debug("Create new key with mock keyId:", keyDbId)
 	return nil
 }
 
@@ -61,7 +65,7 @@ func (adapter *KeyAdapter) Encrypt(plainText []byte) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	log.Println(logHeader, "Encrypt with mock keyId:", adapter.keyID)
+	zhLog.Debug("Encrypt with mock keyId:", adapter.keyID)
 	return cipherText, nil
 }
 
@@ -71,7 +75,7 @@ func (adapter *KeyAdapter) Decrypt(cipherText []byte) ([]byte, error) {
 		return nil, err
 	}
 	plainText, err := sm4.Sm4OFB(key, cipherText, false)
-	log.Println(logHeader, "Decrypt with mock keyId:", adapter.keyID)
+	zhLog.Debug("Decrypt with mock keyId:", adapter.keyID)
 	return plainText, nil
 }
 

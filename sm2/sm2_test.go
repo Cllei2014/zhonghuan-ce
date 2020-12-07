@@ -19,7 +19,7 @@ func TestParsePublicKey(t *testing.T) {
 
 	adapter, err := CreateSm2KeyAdapter(keyID)
 	if err != nil {
-		t.Fatalf("failed to create sm2 key, Got err: %s", err)
+		t.Fatalf("failed to create sm2 key with exist keyID, Got err: %s", err)
 	}
 
 	publicKey := adapter.PublicKey()

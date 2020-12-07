@@ -15,12 +15,12 @@ import (
 	"errors"
 	"fmt"
 	"github.com/Hyperledger-TWGC/tjfoc-gm/sm2"
-	"log"
+	log "github.com/sirupsen/logrus"
+	"github.com/tw-bc-group/zhonghuan-ce/common"
 	"math/big"
 	"unsafe"
 )
 
-const logHeader = "ZhongHuan lib:"
 const PubKeyLen = 64
 const SignatureLen = 256
 
@@ -30,18 +30,26 @@ const SignatureLen = 256
 //04表示SM2椭圆曲线上的点的压缩方式。
 const LenCipherMoreThanPlain = 97 // SM2标准中，密文长度 = 明文长度 + 96 byte + 1 (04)
 
+var zhLog = log.WithFields(log.Fields{"lib": "ZhongHuan CE SM2"})
+
+func init() {
+	common.SetLogLevelByEnv()
+}
+
 func initialize(config string) (handle unsafe.Pointer, err error) {
 	handle = unsafe.Pointer(C.HANDLE(C.NULL))
 	res := uint32(C.X_Initialize(C.CString(config), &handle))
 	if res != C.ERR_SUCCESS {
-		log.Printf("%s X_Initialize Error! ErrorCode=%X", logHeader, res)
+		log.Errorf("X_Initialize Error! ErrorCode=%X", res)
 		return nil, errors.New("X_Initialize Error")
 	}
+	zhLog.Debug("X_Initialize success!")
 	return handle, nil
 }
 
 func finalize(handle unsafe.Pointer) {
 	C.X_Finalize(handle)
+	zhLog.Debug("X_Finalize success!")
 }
 
 func sm2PublicKeyFromZH(zhPubKey []byte) (*sm2.PublicKey, error) {
@@ -78,10 +86,10 @@ func GetVersion() (uint32, error) {
 	version := C.UINT32(0)
 	res := uint32(C.X_GetVersion(&version))
 	if res != C.ERR_SUCCESS {
-		log.Printf("%s X_GetVersion Error! ErrorCode=%X", logHeader, res)
+		zhLog.Errorf("X_GetVersion Error! ErrorCode=%X", res)
 		return 0, errors.New("X_GetVersion Error")
 	}
-	log.Printf("%s X_GetVersion Success! Version=%X", logHeader, res)
+	zhLog.Debugf("X_GetVersion Success! Version=%X", res)
 	return uint32(version), nil
 }
 
@@ -101,10 +109,10 @@ func GenerateKey(config, userLabel, userPin string) (*sm2.PublicKey, error) {
 		&cPublicKey[0],
 		&cKeyLen))
 	if res != C.ERR_SUCCESS {
-		log.Printf("%s X_GenKey Error! ErrorCode=%X", logHeader, res)
+		zhLog.Errorf("X_GenKey Error! ErrorCode=%X", res)
 		return nil, errors.New("X_GenKey Error")
 	}
-	log.Println(logHeader, "X_GenKey Success!")
+	zhLog.Debug("X_GenKey Success!")
 
 	publicKey := C.GoBytes(unsafe.Pointer(&cPublicKey[0]), C.int(cKeyLen))
 	return sm2PublicKeyFromZH(publicKey)
@@ -119,10 +127,10 @@ func DeleteKey(config, userLabel string) error {
 
 	res := uint32(C.X_DelKey(handle, C.CString(userLabel)))
 	if res != C.ERR_SUCCESS {
-		log.Printf("%s X_DelKey Error! ErrorCode=%X", logHeader, res)
+		zhLog.Errorf("X_DelKey Error! ErrorCode=%X", res)
 		return errors.New("X_DelKey Error")
 	}
-	log.Println(logHeader, "X_DelKey Success!")
+	zhLog.Debug("X_DelKey Success!")
 	return nil
 }
 
@@ -141,10 +149,10 @@ func GetPublicKey(config, userLabel string) (*sm2.PublicKey, error) {
 		&cPublicKey[0],
 		&cKeyLen))
 	if res != C.ERR_SUCCESS {
-		log.Printf("%s X_GetPublicKey Error! ErrorCode=%X", logHeader, res)
+		zhLog.Errorf("X_GetPublicKey Error! ErrorCode=%X", res)
 		return nil, errors.New("X_GetPublicKey Error")
 	}
-	log.Println(logHeader, "X_GetPublicKey Success!")
+	zhLog.Debug("X_GetPublicKey Success!")
 
 	publicKey := C.GoBytes(unsafe.Pointer(&cPublicKey[0]), C.int(cKeyLen))
 	return sm2PublicKeyFromZH(publicKey)
@@ -168,10 +176,10 @@ func Sign(config, userLabel, userPin string, message []byte) ([]byte, error) {
 		&cSignature[0],
 		&cSignatureLen))
 	if res != C.ERR_SUCCESS {
-		log.Printf("%s X_Sign Error! ErrorCode=%X", logHeader, res)
+		zhLog.Errorf("X_Sign Error! ErrorCode=%X", res)
 		return nil, errors.New("X_Sign Error")
 	}
-	log.Println(logHeader, "X_Sign Success!")
+	zhLog.Debug("X_Sign Success!")
 	signature := C.GoBytes(unsafe.Pointer(&cSignature[0]), C.int(cSignatureLen))
 	return signature, nil
 }
@@ -192,14 +200,14 @@ func Verify(config string, message, signature []byte, publicKey *sm2.PublicKey) 
 		(*C.uchar)(unsafe.Pointer(&signature[0])),
 		C.UINT32(len(signature))))
 	if res == C.ERR_VERIFY_FAILED {
-		log.Println(logHeader, "X_Verify Failed!")
+		zhLog.Debug("X_Verify Failed!")
 		return false, nil
 	}
 	if res != C.ERR_SUCCESS {
-		log.Printf("%s X_Verify Error! ErrorCode=%X", logHeader, res)
+		zhLog.Errorf("X_Verify Error! ErrorCode=%X", res)
 		return false, errors.New("X_Verify Error")
 	}
-	log.Println(logHeader, "X_Verify Success!")
+	zhLog.Debug("X_Verify Success!")
 	return true, nil
 }
 
@@ -222,10 +230,10 @@ func AsymmetricEncrypt(config string, plainText []byte, publicKey *sm2.PublicKey
 		(*C.UCHAR)(unsafe.Pointer(&cipherText[0])),
 		&cCipherTextLen))
 	if res != C.ERR_SUCCESS {
-		log.Printf("%s X_AsymmEncrypt Error! ErrorCode=%X", logHeader, res)
+		zhLog.Errorf("X_AsymmEncrypt Error! ErrorCode=%X", res)
 		return nil, errors.New("X_AsymmEncrypt Error")
 	}
-	log.Println(logHeader, "X_AsymmEncrypt Success!")
+	zhLog.Debug("X_AsymmEncrypt Success!")
 	return cipherText, nil
 }
 
@@ -248,9 +256,9 @@ func AsymmetricDecrypt(config, userLabel, userPin string, cipherText []byte) ([]
 		(*C.UCHAR)(unsafe.Pointer(&plainText[0])),
 		&cPlainTextLen))
 	if res != C.ERR_SUCCESS {
-		log.Printf("%s X_AsymmDecrypt Error! ErrorCode=%X", logHeader, res)
+		zhLog.Errorf("X_AsymmDecrypt Error! ErrorCode=%X", res)
 		return nil, errors.New("X_AsymmDecrypt Error")
 	}
-	log.Println(logHeader, "X_AsymmDecrypt Success!")
+	zhLog.Debug("X_AsymmDecrypt Success!")
 	return plainText, nil
 }
